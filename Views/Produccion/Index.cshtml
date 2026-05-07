@@ -1,0 +1,52 @@
+@model IEnumerable<BeeKeeperApp.Models.Entities.Extraccion>
+
+@{
+    ViewData["Title"] = "Producción y Exportación";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <a asp-action="Create" class="btn btn-honey">+ Registrar Cosecha</a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="glass-card stat-item bg-honey-light">
+            <div class="stat-value">@ViewBag.TotalKg Kg</div>
+            <div class="stat-label">Producción Total</div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="glass-card stat-item bg-honey text-white">
+            <div class="stat-value">@ViewBag.TotalBarriles</div>
+            <div class="stat-label">Barriles para Exportación (300Kg c/u)</div>
+        </div>
+    </div>
+</div>
+
+<div class="glass-card">
+    <h3 class="h5 mb-4">Historial de Extracciones</h3>
+    <table class="table table-custom">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Colmena</th>
+                <th>Apiario</th>
+                <th>Cantidad (Kg)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model) {
+                <tr>
+                    <td>@item.Fecha.ToShortDateString()</td>
+                    <td>#@item.ColmenaId</td>
+                    <td>@item.Colmena?.Apiario?.Nombre</td>
+                    <td class="fw-bold">@item.CantidadKg Kg</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-4">
+    <a href="/Export/DeclaracionJurada" class="btn btn-outline-dark" target="_blank">Ver Formulario de Exportación</a>
+</div>

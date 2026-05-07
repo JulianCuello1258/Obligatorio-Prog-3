@@ -1,0 +1,64 @@
+@model BeeKeeperApp.Models.Entities.Apiario
+
+@{
+    ViewData["Title"] = "Nuevo Apiario";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="glass-card">
+            <h2 class="h4 mb-4">Registrar Nuevo Apiario</h2>
+            <form asp-action="Create">
+                <div class="mb-3">
+                    <label asp-for="Nombre" class="form-label">Nombre del Apiario</label>
+                    <input asp-for="Nombre" class="form-control" placeholder="Ej: Apiario El Sauce" required />
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Latitud" class="form-label">Latitud</label>
+                        <input asp-for="Latitud" class="form-control" type="number" step="any" required />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Longitud" class="form-label">Longitud</label>
+                        <input asp-for="Longitud" class="form-control" type="number" step="any" required />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Tipo" class="form-label">Tipo</label>
+                        <select asp-for="Tipo" class="form-select" asp-items="Html.GetEnumSelectList<BeeKeeperApp.Models.Entities.TipoApiario>()"></select>
+                    </div>
+                    <div class="col-md-6 mb-3 d-flex align-items-center">
+                        <div class="form-check mt-4">
+                            <input asp-for="TrashumanciaHabilitada" class="form-check-input" type="checkbox" />
+                            <label class="form-check-label">Habilitar Trashumancia</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Departamento" class="form-label">Departamento</label>
+                        <input asp-for="Departamento" class="form-control" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="SeccionPolicial" class="form-label">Sección Policial</label>
+                        <input asp-for="SeccionPolicial" class="form-control" required />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Zona" class="form-label">Zona / Paraje</label>
+                    <input asp-for="Zona" class="form-control" required />
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-honey w-100">Guardar Apiario</button>
+                    <a asp-action="Index" class="btn btn-link w-100 mt-2">Volver al listado</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

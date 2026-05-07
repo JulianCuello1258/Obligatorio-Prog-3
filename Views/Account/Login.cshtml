@@ -1,0 +1,37 @@
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Acceso - BeeKeeper Pro</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/beekeeper.css" />
+</head>
+<body class="login-body">
+    <div class="login-card">
+        <img src="/Images/hogar.png" class="login-logo" />
+        <h1 class="h4 fw-bold mb-1" style="color: var(--honey-dark)">BeeKeeper Pro</h1>
+        <p class="text-muted small mb-4">Ingrese su clave para continuar</p>
+        
+        <form asp-action="Login" method="post">
+            <div class="mb-4">
+                <input type="password" name="password" class="form-control form-control-lg text-center" 
+                       placeholder="••••••••" required autofocus 
+                       style="border-radius: 15px; border: 2px solid #eee; background: #fafafa;" />
+            </div>
+            
+            @if (ViewBag.Error != null) {
+                <div class="alert alert-danger py-2 small mb-4">@ViewBag.Error</div>
+            }
+            
+            <button type="submit" class="btn btn-honey btn-lg w-100 py-3 fw-bold" style="border-radius: 15px; letter-spacing: 1px;">
+                INGRESAR
+            </button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+@model IEnumerable<BeeKeeperApp.Models.Entities.Apiario>
+
+@{
+    ViewData["Title"] = "Mapa de Apiarios";
+}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<div class="glass-card p-0" style="overflow: hidden;">
+    <div id="map" style="height: 600px; width: 100%;"></div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([-34.9011, -56.1645], 10); // Default to Uruguay if no data
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        var apiarios = @Json.Serialize(Model);
+        var markers = [];
+
+        if (apiarios.length > 0) {
+            apiarios.forEach(function(a) {
+                var marker = L.marker([a.latitud, a.longitud]).addTo(map);
+                marker.bindPopup("<b>" + a.nombre + "</b><br>" + a.zona + "<br><a href='/Apiarios/Details/" + a.id + "'>Ver Apiario</a>");
+                
+                // Circle representing bee range (approx 3km)
+                L.circle([a.latitud, a.longitud], {
+                    color: '#f2a900',
+                    fillColor: '#f2a900',
+                    fillOpacity: 0.1,
+                    radius: 3000
+                }).addTo(map);
+
+                markers.push([a.latitud, a.longitud]);
+            });
+
+            var bounds = new L.LatLngBounds(markers);
+            map.fitBounds(bounds);
+        }
+    </script>
+}

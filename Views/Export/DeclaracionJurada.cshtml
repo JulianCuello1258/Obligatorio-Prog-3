@@ -1,0 +1,73 @@
+@model IEnumerable<BeeKeeperApp.Models.Entities.Apiario>
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Declaración Jurada - Ministerio de Ganadería</title>
+    <style>
+        body { font-family: serif; padding: 40px; line-height: 1.6; }
+        .header { text-align: center; border-bottom: 2px solid black; padding-bottom: 20px; margin-bottom: 30px; }
+        .section { margin-bottom: 30px; }
+        .section-title { font-weight: bold; text-decoration: underline; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; font-size: 12px; }
+        .print-btn { background: #333; color: white; padding: 10px 20px; border: none; cursor: pointer; margin-bottom: 20px; }
+        @@media print { .print-btn { display: none; } }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">🖨️ Imprimir Declaración</button>
+
+    <div class="header">
+        <h1>MINISTERIO DE GANADERÍA, AGRICULTURA Y PESCA</h1>
+        <h2>DIRECCIÓN GENERAL DE SERVICIOS GANADEROS</h2>
+        <h3>DECLARACIÓN JURADA DE APIARIOS</h3>
+    </div>
+
+    <div class="section">
+        <p class="section-title">DATOS DEL TITULAR</p>
+        <p>Nombre: _________________________________ CI: _______________</p>
+        <p>Domicilio: _________________________________ Teléfono: _______________</p>
+    </div>
+
+    <div class="section">
+        <p class="section-title">DETALLE DE APIARIOS</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nro</th>
+                    <th>Nombre Apiario</th>
+                    <th>Departamento</th>
+                    <th>Seccional</th>
+                    <th>Paraje</th>
+                    <th>Coordenadas</th>
+                    <th>Cant. Colmenas</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var a in Model) {
+                    <tr>
+                        <td>@a.Id</td>
+                        <td>@a.Nombre</td>
+                        <td>@a.Departamento</td>
+                        <td>@a.SeccionPolicial</td>
+                        <td>@a.Paraje</td>
+                        <td>@a.Latitud, @a.Longitud</td>
+                        <td>@a.Colmenas.Count</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section" style="margin-top: 100px;">
+        <p style="text-align: right;">Firma del Titular: _____________________________</p>
+        <p style="text-align: right;">Fecha: @DateTime.Now.ToShortDateString()</p>
+    </div>
+</body>
+</html>

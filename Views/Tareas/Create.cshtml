@@ -1,0 +1,41 @@
+@model BeeKeeperApp.Models.Entities.Tarea
+
+@{
+    ViewData["Title"] = "Nueva Tarea";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="glass-card">
+            <h2 class="h4 mb-4">Registrar Nueva Tarea</h2>
+            <form asp-action="Create">
+                <div class="mb-3">
+                    <label asp-for="Descripcion" class="form-label">Descripción</label>
+                    <input asp-for="Descripcion" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="FechaProgramada" class="form-label">Fecha Programada</label>
+                    <input asp-for="FechaProgramada" class="form-control" type="date" required />
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ApiarioId" class="form-label">Apiario (Opcional)</label>
+                        <select asp-for="ApiarioId" class="form-select" asp-items="ViewBag.ApiarioId">
+                            <option value="">Seleccione un apiario</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ColmenaId" class="form-label">Colmena (Opcional)</label>
+                        <select asp-for="ColmenaId" class="form-select" asp-items="ViewBag.ColmenaId">
+                            <option value="">Seleccione una colmena</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-honey w-100">Guardar Tarea</button>
+                    <a asp-action="Index" class="btn btn-link w-100 mt-2">Volver</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

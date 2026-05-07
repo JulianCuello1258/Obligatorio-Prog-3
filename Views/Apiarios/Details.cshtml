@@ -1,0 +1,48 @@
+@model BeeKeeperApp.Models.Entities.Apiario
+
+@{
+    ViewData["Title"] = "Detalle de Apiario";
+}
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="glass-card">
+            <h2 class="h4 mb-3">@Model.Nombre</h2>
+            <p><strong>Ubicación:</strong> @Model.Latitud, @Model.Longitud</p>
+            <p><strong>Tipo:</strong> @Model.Tipo</p>
+            <p><strong>Zona:</strong> @Model.Zona</p>
+            <p><strong>Sección:</strong> @Model.SeccionPolicial</p>
+            <hr />
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-honey w-100 mb-2">Editar</a>
+            <a asp-action="Index" class="btn btn-outline-dark w-100">Volver</a>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="glass-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="h5">Colmenas en este Apiario</h3>
+                <a asp-controller="Colmenas" asp-action="Create" asp-route-apiarioId="@Model.Id" class="btn btn-sm btn-honey">+ Nueva Colmena</a>
+            </div>
+            <table class="table table-custom">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Estado</th>
+                        <th>Tipo</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.Colmenas) {
+                        <tr>
+                            <td>#@c.Id</td>
+                            <td>@c.Estado</td>
+                            <td>@c.Tipo</td>
+                            <td><a asp-controller="Colmenas" asp-action="Details" asp-route-id="@c.Id" class="btn btn-sm btn-outline-secondary">Ver</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

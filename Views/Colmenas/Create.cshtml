@@ -1,0 +1,54 @@
+@model BeeKeeperApp.Models.Entities.Colmena
+
+@{
+    ViewData["Title"] = "Nueva Colmena";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="glass-card">
+            <h2 class="h4 mb-4">Registrar Nueva Colmena</h2>
+            <form asp-action="Create">
+                <div class="mb-3">
+                    <label asp-for="ApiarioId" class="form-label">Apiario</label>
+                    <select asp-for="ApiarioId" class="form-select" asp-items="ViewBag.ApiarioId"></select>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Tipo" class="form-label">Tipo de Colmena</label>
+                        <input asp-for="Tipo" class="form-control" placeholder="Ej: Langstroth" required />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Estado" class="form-label">Estado Inicial</label>
+                        <select asp-for="Estado" class="form-select" asp-items="Html.GetEnumSelectList<BeeKeeperApp.Models.Entities.EstadoColmena>()"></select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Poblacion" class="form-label">Población / Fuerza</label>
+                        <select asp-for="Poblacion" class="form-select">
+                            <option>Fuerte</option>
+                            <option>Media</option>
+                            <option>Débil</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Temperamento" class="form-label">Temperamento</label>
+                        <select asp-for="Temperamento" class="form-select">
+                            <option>Mansa</option>
+                            <option>Normal</option>
+                            <option>Agresiva</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-honey w-100">Guardar Colmena</button>
+                    <a asp-action="Index" class="btn btn-link w-100 mt-2">Volver</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

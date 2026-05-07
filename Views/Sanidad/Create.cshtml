@@ -1,0 +1,104 @@
+@model BeeKeeperApp.Models.Entities.Revision
+
+@{
+    ViewData["Title"] = "Registrar Inspección";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="glass-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h4">Nueva Revisión</h2>
+                <button type="button" id="start-voice" class="btn btn-outline-dark">
+                    🎤 Dictar Datos
+                </button>
+            </div>
+
+            <form asp-action="Create">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ColmenaId" class="form-label">Colmena</label>
+                        <select asp-for="ColmenaId" class="form-select" asp-items="ViewBag.ColmenaId"></select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Fecha" class="form-label">Fecha</label>
+                        <input asp-for="Fecha" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Enfermedades" class="form-label">Enfermedades Detectadas</label>
+                    <input asp-for="Enfermedades" id="field-enfermedades" class="form-control" placeholder="Ej: Varroasis" />
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Tratamiento" class="form-label">Tratamiento</label>
+                        <input asp-for="Tratamiento" id="field-tratamiento" class="form-control" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ProximaDosis" class="form-label">Fecha Próxima Dosis</label>
+                        <input asp-for="ProximaDosis" class="form-control" type="date" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Observaciones" class="form-label">Observaciones</label>
+                    <textarea asp-for="Observaciones" id="field-observaciones" class="form-control" rows="3"></textarea>
+                </div>
+
+                <hr />
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check">
+                            <input asp-for="ReinaPresente" class="form-check-input" type="checkbox" checked />
+                            <label class="form-check-label">Reina Presente</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check">
+                            <input asp-for="HayCrias" class="form-check-input" type="checkbox" checked />
+                            <label class="form-check-label">Hay Crías</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-honey w-100">Guardar Inspección</button>
+                    <a asp-action="Index" class="btn btn-link w-100 mt-2">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/voiceTranscription.js"></script>
+    <script>
+        $(document).ready(function() {
+            if (VoiceTranscription.init(onVoiceResult)) {
+                $('#start-voice').click(function() {
+                    if (VoiceTranscription.isListening) {
+                        VoiceTranscription.stop();
+                        $(this).text('🎤 Dictar Datos').removeClass('btn-danger').addClass('btn-outline-dark');
+                    } else {
+                        VoiceTranscription.start();
+                        $(this).text('🛑 Escuchando...').removeClass('btn-outline-dark').addClass('btn-danger');
+                    }
+                });
+            }
+
+            function onVoiceResult(text) {
+                $('#start-voice').text('🎤 Dictar Datos').removeClass('btn-danger').addClass('btn-outline-dark');
+                const data = VoiceTranscription.parseTranscript(text);
+                
+                if (data.colmena) $('#ColmenaId').val(data.colmena);
+                if (data.tratamiento) $('#field-tratamiento').val(data.tratamiento);
+                $('#field-observaciones').val(text);
+                
+                showNotification("Voz Procesada", "Se han extraído datos de la nota de voz.");
+            }
+        });
+    </script>
+}

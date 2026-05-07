@@ -1,0 +1,59 @@
+@model IEnumerable<BeeKeeperApp.Models.Entities.Apiario>
+
+@{
+    ViewData["Title"] = "Gestión de Apiarios";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <p>
+        <a asp-action="Create" class="btn btn-honey">+ Nuevo Apiario</a>
+    </p>
+    <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            Ordenar por
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="@ViewData["NameSortParm"]">Nombre</a></li>
+            <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="@ViewData["DateSortParm"]">Fecha</a></li>
+        </ul>
+    </div>
+</div>
+
+<div class="row">
+    @foreach (var item in Model) {
+        <div class="col-md-4 mb-4">
+            <div class="glass-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h3 class="h5 mb-0">@item.Nombre</h3>
+                    <span class="badge @(item.Tipo == BeeKeeperApp.Models.Entities.TipoApiario.Fijo ? "bg-info" : "bg-warning text-dark")">
+                        @item.Tipo
+                    </span>
+                </div>
+                
+                <p class="text-muted small">
+                    <img src="/Images/marcador-de-mapa.png" width="16" /> @item.Zona, @item.SeccionPolicial
+                </p>
+
+                <div class="stats-grid mt-3">
+                    <div class="stat-item">
+                        <div class="stat-value" style="font-size: 1.2rem;">@item.Colmenas.Count</div>
+                        <div class="stat-label">Colmenas</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-2">
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark">Ver detalles</a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"><img src="/Images/editar.png" width="14" /></a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">X</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.Any()) {
+    <div class="text-center py-5">
+        <img src="/Images/apiarios.png" width="100" style="opacity: 0.3;" />
+        <p class="mt-3 text-muted">No hay apiarios registrados aún.</p>
+    </div>
+}
