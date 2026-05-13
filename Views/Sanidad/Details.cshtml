@@ -1,0 +1,90 @@
+@model BeeKeeperApp.Models.Entities.Revision
+
+@{
+    ViewData["Title"] = "Detalle de Inspección";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="glass-card">
+            <h2 class="h4 mb-4">Detalle de Inspección Sanitaria</h2>
+            
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold">Fecha:</div>
+                <div class="col-sm-8">@Model.Fecha.ToShortDateString()</div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold">Apiario:</div>
+                <div class="col-sm-8">@(Model.Colmena?.Apiario?.Nombre ?? "-")</div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold">Colmena:</div>
+                <div class="col-sm-8">#@Model.ColmenaId</div>
+            </div>
+
+            <hr />
+
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold">Enfermedades:</div>
+                <div class="col-sm-8">
+                    @if (string.IsNullOrEmpty(Model.Enfermedades))
+                    {
+                        <span class="badge bg-success">Saludable</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">@Model.Enfermedades</span>
+                    }
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold">Tratamiento Aplicado:</div>
+                <div class="col-sm-8">@(string.IsNullOrEmpty(Model.Tratamiento) ? "Ninguno" : Model.Tratamiento)</div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold">Próxima Dosis:</div>
+                <div class="col-sm-8">
+                    @if (Model.ProximaDosis.HasValue)
+                    {
+                        <span class="text-warning">@Model.ProximaDosis.Value.ToShortDateString()</span>
+                    }
+                    else
+                    {
+                        <span>-</span>
+                    }
+                </div>
+            </div>
+
+            <hr />
+
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold">Reina Presente:</div>
+                <div class="col-sm-8">
+                    @(Model.ReinaPresente ? "✅ Sí" : "❌ No")
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold">Hay Crías:</div>
+                <div class="col-sm-8">
+                    @(Model.HayCrias ? "✅ Sí" : "❌ No")
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold">Observaciones:</div>
+                <div class="col-sm-8">
+                    <div class="p-3 bg-light rounded text-dark" style="white-space: pre-wrap;">@(string.IsNullOrEmpty(Model.Observaciones) ? "Sin observaciones." : Model.Observaciones)</div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <a asp-action="Index" class="btn btn-outline-dark w-100">Volver a Sanidad</a>
+            </div>
+        </div>
+    </div>
+</div>

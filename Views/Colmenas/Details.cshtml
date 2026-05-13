@@ -1,0 +1,53 @@
+@model BeeKeeperApp.Models.Entities.Colmena
+
+@{
+    ViewData["Title"] = "Detalles de Colmena";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="glass-card">
+            <h2>Detalles de Colmena #@Model.Id</h2>
+            <hr />
+            <dl class="row">
+                <dt class="col-sm-3">Apiario</dt>
+                <dd class="col-sm-9">@(Model.Apiario?.Nombre ?? "N/A")</dd>
+
+                <dt class="col-sm-3">Estado</dt>
+                <dd class="col-sm-9">@Model.Estado</dd>
+
+                <dt class="col-sm-3">Tipo</dt>
+                <dd class="col-sm-9">@Model.Tipo</dd>
+
+                <dt class="col-sm-3">Población</dt>
+                <dd class="col-sm-9">@Model.Poblacion</dd>
+
+                <dt class="col-sm-3">Temperamento</dt>
+                <dd class="col-sm-9">@Model.Temperamento</dd>
+
+                <dt class="col-sm-12 mt-3">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+                        <h5 class="text-honey-dark mb-0">Información de la Reina</h5>
+                        <a asp-action="GestionarReina" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-warning">Gestionar Reina</a>
+                    </div>
+                </dt>
+                
+                <dt class="col-sm-3 mt-2">Presencia</dt>
+                <dd class="col-sm-9">@(Model.Reina?.Presencia == true ? "Presente" : "Ausente")</dd>
+                
+                @if(Model.Reina?.Presencia == true)
+                {
+                    <dt class="col-sm-3">Estado de Salud</dt>
+                    <dd class="col-sm-9">@Model.Reina?.Salud</dd>
+
+                    <dt class="col-sm-3">Fecha de Nacimiento</dt>
+                    <dd class="col-sm-9">@(Model.Reina?.FechaNacimiento?.ToString("dd/MM/yyyy") ?? "No registrada")</dd>
+                }
+            </dl>
+            
+            <div class="mt-4">
+                <a asp-controller="Apiarios" asp-action="Details" asp-route-id="@Model.ApiarioId" class="btn btn-secondary">Volver al Apiario</a>
+            </div>
+        </div>
+    </div>
+</div>

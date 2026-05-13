@@ -1,0 +1,60 @@
+@model IEnumerable<BeeKeeperApp.Controllers.ApiarioComparacionViewModel>
+
+@{
+    ViewData["Title"] = "Comparación de Apiarios";
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h2>@ViewData["Title"]</h2>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver a Apiarios
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Apiario</th>
+                            <th class="text-center">Total Colmenas</th>
+                            <th class="text-center">Colmenas Activas</th>
+                            <th class="text-end">Producción Total (Kg)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.Nombre</strong>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">@item.TotalColmenas</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-success">@item.ColmenasActivas</span>
+                                </td>
+                                <td class="text-end fw-bold text-primary">
+                                    @item.ProduccionTotal.ToString("N2") Kg
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="table-light fw-bold">
+                        <tr>
+                            <td>Total General</td>
+                            <td class="text-center">@Model.Sum(m => m.TotalColmenas)</td>
+                            <td class="text-center">@Model.Sum(m => m.ColmenasActivas)</td>
+                            <td class="text-end">@Model.Sum(m => m.ProduccionTotal).ToString("N2") Kg</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -4,7 +4,7 @@ namespace BeeKeeperApp.Controllers
 {
     public class AccountController : Controller
     {
-        private const string HardcodedPassword = "Apicultor2024";
+        private const string HardcodedPassword = "MatiApicultor";
 
         [HttpGet]
         public IActionResult Login()

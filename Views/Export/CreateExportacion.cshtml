@@ -1,0 +1,49 @@
+@model BeeKeeperApp.Models.Entities.Exportacion
+
+@{
+    ViewData["Title"] = "Registrar Exportación";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="glass-card">
+            <h2 class="text-honey-dark mb-4"><i class="bi bi-box-seam"></i> Registrar Exportación</h2>
+            <hr />
+
+            <form asp-action="CreateExportacion">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                
+                <div class="mb-3">
+                    <label asp-for="CantidadBarriles" class="form-label fw-bold">Cantidad de Barriles</label>
+                    <input asp-for="CantidadBarriles" type="number" min="1" class="form-control" placeholder="Cantidad" required />
+                    <span asp-validation-for="CantidadBarriles" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Destino" class="form-label fw-bold">Destino</label>
+                    <input asp-for="Destino" class="form-control" placeholder="Distribuidor" required />
+                    <span asp-validation-for="Destino" class="text-danger"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Fecha" class="form-label fw-bold">Fecha de Exportación</label>
+                    <input asp-for="Fecha" type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                    <span asp-validation-for="Fecha" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="Exportaciones" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-honey">
+                        <i class="bi bi-save"></i> Guardar Exportación
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

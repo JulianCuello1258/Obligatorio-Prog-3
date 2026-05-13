@@ -1,0 +1,79 @@
+@model BeeKeeperApp.Models.Entities.Colmena
+
+@{
+    ViewData["Title"] = "Gestionar Reina";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="glass-card">
+            <h2 class="text-center text-honey-dark mb-4">Gestionar Reina - Colmena #@Model.Id</h2>
+            <hr />
+
+            <form asp-action="GestionarReina">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <input type="hidden" name="ColmenaId" value="@Model.Id" />
+
+                <div class="mb-3 form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="Presencia" name="Presencia" value="true" @(Model.Reina?.Presencia == true ? "checked" : "") />
+                    <input type="hidden" name="Presencia" value="false" />
+                    <label class="form-check-label fw-bold" for="Presencia">¿Reina Presente?</label>
+                </div>
+
+                <div id="reinaDetails" style="display: @(Model.Reina?.Presencia == true ? "block" : "none");">
+                    <div class="mb-3">
+                        <label for="Salud" class="form-label fw-bold">Estado de Salud</label>
+                        <select id="Salud" name="Salud" class="form-select">
+                            @if(Model.Reina?.Salud == "Buena") {
+                                <option value="Buena" selected>Buena</option>
+                            } else {
+                                <option value="Buena">Buena</option>
+                            }
+                            @if(Model.Reina?.Salud == "Regular") {
+                                <option value="Regular" selected>Regular</option>
+                            } else {
+                                <option value="Regular">Regular</option>
+                            }
+                            @if(Model.Reina?.Salud == "Mala") {
+                                <option value="Mala" selected>Mala</option>
+                            } else {
+                                <option value="Mala">Mala</option>
+                            }
+                        </select>
+                        <span class="text-danger" data-valmsg-for="Salud" data-valmsg-replace="true"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="FechaNacimiento" class="form-label fw-bold">Fecha de Nacimiento</label>
+                        <input type="date" id="FechaNacimiento" name="FechaNacimiento" class="form-control" 
+                               value="@(Model.Reina?.FechaNacimiento?.ToString("yyyy-MM-dd"))" />
+                        <span class="text-danger" data-valmsg-for="FechaNacimiento" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex justify-content-between">
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-honey">
+                        <i class="bi bi-check-circle"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.getElementById('Presencia').addEventListener('change', function() {
+            var details = document.getElementById('reinaDetails');
+            if (this.checked) {
+                details.style.display = 'block';
+            } else {
+                details.style.display = 'none';
+            }
+        });
+    </script>
+}

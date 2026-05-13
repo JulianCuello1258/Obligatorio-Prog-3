@@ -1,0 +1,96 @@
+@model BeeKeeperApp.Models.Entities.Colmena
+@using BeeKeeperApp.Models.Entities
+
+@{
+    ViewData["Title"] = "Editar Colmena";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="glass-card">
+            <h2>Editar Colmena #@Model.Id</h2>
+            <hr />
+            <form asp-action="Edit">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="FechaCreacion" />
+                
+                <div class="mb-3">
+                    <label asp-for="ApiarioId" class="form-label">Apiario</label>
+                    <select asp-for="ApiarioId" class="form-select" asp-items="ViewBag.ApiarioId"></select>
+                    <span asp-validation-for="ApiarioId" class="text-danger"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Estado" class="form-label">Estado</label>
+                        <select asp-for="Estado" class="form-select" asp-items="Html.GetEnumSelectList<EstadoColmena>()"></select>
+                        <span asp-validation-for="Estado" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Tipo" class="form-label">Tipo</label>
+                        <select asp-for="Tipo" class="form-select">
+                            <option value="Langstroth">Langstroth</option>
+                            <option value="Dadant">Dadant</option>
+                            <option value="Jumbo">Jumbo</option>
+                            <option value="Otra">Otra</option>
+                        </select>
+                        <span asp-validation-for="Tipo" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Poblacion" class="form-label">Población</label>
+                        <select asp-for="Poblacion" class="form-select">
+                            <option value="Fuerte">Fuerte</option>
+                            <option value="Media">Media</option>
+                            <option value="Debil">Débil</option>
+                            <option value="Perdida">Perdida</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Temperamento" class="form-label">Temperamento</label>
+                        <select asp-for="Temperamento" class="form-select">
+                            <option value="Mansa">Mansa</option>
+                            <option value="Moderada">Moderada</option>
+                            <option value="Agresiva">Agresiva</option>
+                        </select>
+                    </div>
+                </div>
+
+                <hr class="mt-4 mb-4" />
+                <h5 class="mb-3 text-honey-dark">Información de la Reina</h5>
+                <input type="hidden" asp-for="Reina.ColmenaId" />
+                <div class="row">
+                    <div class="col-md-4 mb-3 d-flex align-items-center">
+                        <div class="form-check mt-4">
+                            <input asp-for="Reina.Presencia" class="form-check-input" type="checkbox" />
+                            <label class="form-check-label">Reina Presente</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Reina.Salud" class="form-label">Estado de Salud</label>
+                        <select asp-for="Reina.Salud" class="form-select">
+                            <option value="Buena">Buena</option>
+                            <option value="Regular">Regular</option>
+                            <option value="Mala">Mala</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Reina.FechaNacimiento" class="form-label">Fecha de Nacimiento</label>
+                        <input asp-for="Reina.FechaNacimiento" class="form-control" type="date" />
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-honey w-100">Guardar Cambios</button>
+                    <a asp-action="Index" class="btn btn-link w-100 mt-2 text-center">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

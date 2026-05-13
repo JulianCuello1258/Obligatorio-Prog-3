@@ -1,0 +1,37 @@
+@model BeeKeeperApp.Models.Entities.Apiario
+
+@{
+    ViewData["Title"] = "Eliminar Apiario";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="glass-card text-center">
+            <h2 class="text-danger mb-4">¿Estás seguro de que deseas eliminar este Apiario?</h2>
+            
+            <dl class="row text-start mb-4">
+                <dt class="col-sm-4">Nombre</dt>
+                <dd class="col-sm-8">@Model.Nombre</dd>
+
+                <dt class="col-sm-4">Tipo</dt>
+                <dd class="col-sm-8">@Model.Tipo</dd>
+
+                <dt class="col-sm-4">Zona</dt>
+                <dd class="col-sm-8">@Model.Zona</dd>
+
+                <dt class="col-sm-4">Colmenas</dt>
+                <dd class="col-sm-8">@(Model.Colmenas?.Count ?? 0)</dd>
+            </dl>
+            
+            <div class="alert alert-warning text-start">
+                <strong>Advertencia:</strong> Esta acción eliminará el apiario y todas sus colmenas asociadas. No se puede deshacer.
+            </div>
+
+            <form asp-action="Delete">
+                <input type="hidden" asp-for="Id" />
+                <button type="submit" class="btn btn-danger w-100 mb-2">Sí, Eliminar Definitivamente</button>
+                <a asp-action="Index" class="btn btn-secondary w-100">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>

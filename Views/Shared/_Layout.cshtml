@@ -11,17 +11,19 @@
 </head>
 <body>
     <div class="sidebar">
-        <h2 class="mb-4"><img src="/Images/hogar.png" width="30" /> BeeKeeper</h2>
+        <h2 class="mb-4"><img src="/Images/logo.png" width="30" /> BeeKeeper</h2>
         <nav>
             <ul>
-                <li><a href="/" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")"><img src="/Images/hogar.png" /> Dashboard</a></li>
-                <li><a href="/Apiarios"><img src="/Images/apiarios.png" /> Apiarios</a></li>
-                <li><a href="/Colmenas"><img src="/Images/colmenas.png" /> Colmenas</a></li>
-                <li><a href="/Sanidad"><img src="/Images/tratamiento.png" /> Sanidad</a></li>
-                <li><a href="/Produccion"><img src="/Images/Estadisticas.png" /> Producción</a></li>
-                <li><a href="/Trashumancia"><img src="/Images/apiarios.png" /> Trashumancia</a></li>
-                <li><a href="/Mapa"><img src="/Images/marcador-de-mapa.png" /> Mapa</a></li>
-                <li><a href="/Tareas"><img src="/Images/comprobacion-de-lista.png" /> Tareas</a></li>
+                @{ var controller = ViewContext.RouteData.Values["Controller"]?.ToString(); }
+                <li><a href="/" class="@(controller == "Home" || string.IsNullOrEmpty(controller) ? "active" : "")"><img src="/Images/hogar.png" /> Principal</a></li>
+                <li><a href="/Apiarios" class="@(controller == "Apiarios" ? "active" : "")"><img src="/Images/apiarios.png" /> Apiarios</a></li>
+                <li><a href="/Colmenas" class="@(controller == "Colmenas" ? "active" : "")"><img src="/Images/colmenas.png" /> Colmenas</a></li>
+                <li><a href="/Sanidad" class="@(controller == "Sanidad" ? "active" : "")"><img src="/Images/tratamiento.png" /> Inspecciones</a></li>
+                <li><a href="/Produccion" class="@(controller == "Produccion" ? "active" : "")"><img src="/Images/Estadisticas.png" /> Producción</a></li>
+                <li><a href="/Export/Exportaciones" class="@(controller == "Export" ? "active" : "")"><img src="/Images/exportacion.png" /> Exportación</a></li>
+                <li><a href="/Trashumancia" class="@(controller == "Trashumancia" ? "active" : "")"><img src="/Images/apiarios.png" /> Trashumancia</a></li>
+                <li><a href="/Mapa" class="@(controller == "Mapa" ? "active" : "")"><img src="/Images/marcador-de-mapa.png" /> Mapa</a></li>
+                <li><a href="/Tareas" class="@(controller == "Tareas" ? "active" : "")"><img src="/Images/comprobacion-de-lista.png" /> Tareas</a></li>
                 <li class="mt-5"><a href="/Account/Logout" class="text-danger"><img src="/Images/editar-oscuro.png" /> Cerrar Sesión</a></li>
             </ul>
         </nav>

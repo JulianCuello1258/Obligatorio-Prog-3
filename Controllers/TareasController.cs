@@ -25,6 +25,20 @@ namespace BeeKeeperApp.Controllers
             return View(tareas);
         }
 
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var tarea = await _context.Tareas
+                .Include(t => t.Colmena)
+                .Include(t => t.Apiario)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (tarea == null) return NotFound();
+
+            return View(tarea);
+        }
+
         [HttpPost]
         public async Task<IActionResult> MarkCompleted(int id)
         {
@@ -47,6 +61,11 @@ namespace BeeKeeperApp.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(Tarea tarea)
         {
+            if (tarea.FechaProgramada < DateTime.Today)
+            {
+                ModelState.AddModelError("FechaProgramada", "La fecha programada debe ser posterior o igual al día de hoy.");
+            }
+
             if (ModelState.IsValid)
             {
                 _context.Add(tarea);
@@ -64,7 +83,7 @@ namespace BeeKeeperApp.Controllers
                 .Where(t => !t.Completada)
                 .OrderBy(t => t.FechaProgramada)
                 .Take(5)
-                .Select(t => new { t.Descripcion, Fecha = t.FechaProgramada.ToShortDateString() })
+                .Select(t => new { t.Id, t.Titulo, t.Descripcion, Fecha = t.FechaProgramada.ToShortDateString() })
                 .ToListAsync();
             return Json(pending);
         }

@@ -29,6 +29,17 @@ namespace BeeKeeperApp.Models.Entities
         public string? ReinaSalud { get; set; }
         public bool HayCrias { get; set; }
 
+        // Nuevos campos
+        public string? Plagas { get; set; }
+        public string? NivelInfestacion { get; set; }
+        public string? ResultadoTratamiento { get; set; }
+        public bool Enjambrazon { get; set; }
+        public double? Temperatura { get; set; }
+        public double? Humedad { get; set; }
+        public double? Presion { get; set; }
+        public double? VelocidadViento { get; set; }
+        public string? DireccionViento { get; set; }
+
         // Navigation
         [ForeignKey("ColmenaId")]
         public Colmena? Colmena { get; set; }
@@ -57,6 +68,9 @@ namespace BeeKeeperApp.Models.Entities
         public int? ColmenaId { get; set; }
 
         [Required]
+        public string Titulo { get; set; } = string.Empty;
+
+        [Required]
         public string Descripcion { get; set; } = string.Empty;
 
         public DateTime FechaProgramada { get; set; }
@@ -83,5 +97,18 @@ namespace BeeKeeperApp.Models.Entities
 
         [ForeignKey("ApiarioDestinoId")]
         public Apiario? ApiarioDestino { get; set; }
+    }
+
+    public class Exportacion
+    {
+        public int Id { get; set; }
+        
+        [Required]
+        public int CantidadBarriles { get; set; }
+        
+        [Required]
+        public string Destino { get; set; } = string.Empty;
+        
+        public DateTime Fecha { get; set; } = DateTime.Now;
     }
 }

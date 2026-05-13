@@ -17,9 +17,19 @@
             <form asp-action="Create">
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label asp-for="ColmenaId" class="form-label">Colmena</label>
-                        <select asp-for="ColmenaId" class="form-select" asp-items="ViewBag.ColmenaId"></select>
+                        <label class="form-label">Apiario</label>
+                        <select id="ApiarioId" class="form-select" asp-items="ViewBag.ApiarioId">
+                            <option value="">-- Seleccione un Apiario --</option>
+                        </select>
                     </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ColmenaId" class="form-label">Colmena</label>
+                        <select asp-for="ColmenaId" class="form-select">
+                            <option value="">-- Seleccione una Colmena --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
                     <div class="col-md-6 mb-3">
                         <label asp-for="Fecha" class="form-label">Fecha</label>
                         <input asp-for="Fecha" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
@@ -77,27 +87,56 @@
     <script src="~/js/voiceTranscription.js"></script>
     <script>
         $(document).ready(function() {
+            // Cargar colmenas al cambiar apiario
+            $('#ApiarioId').change(function() {
+                var apiarioId = $(this).val();
+                var $colmenaSelect = $('#ColmenaId');
+                $colmenaSelect.empty();
+                $colmenaSelect.append('<option value="">-- Seleccione una Colmena --</option>');
+                if (apiarioId) {
+                    $.get('/Sanidad/GetColmenasByApiario', { apiarioId: apiarioId }, function(data) {
+                        data.forEach(function(item) {
+                            $colmenaSelect.append('<option value="' + item.id + '">Colmena #' + item.id + '</option>');
+                        });
+                    });
+                }
+            });
+
+            // Preparar transcripción
+            let textoPrevio = "";
+
+            window.onInterim = function(text) {
+                // Muestra el texto en vivo en observaciones
+                if (textoPrevio.trim() !== '') {
+                    $('#field-observaciones').val(textoPrevio + '\n' + text);
+                } else {
+                    $('#field-observaciones').val(text);
+                }
+            };
+
             if (VoiceTranscription.init(onVoiceResult)) {
                 $('#start-voice').click(function() {
                     if (VoiceTranscription.isListening) {
-                        VoiceTranscription.stop();
+                        VoiceTranscription.stop(); // Esto llama a onVoiceResult automáticamente
                         $(this).text('🎤 Dictar Datos').removeClass('btn-danger').addClass('btn-outline-dark');
                     } else {
+                        textoPrevio = $('#field-observaciones').val();
                         VoiceTranscription.start();
-                        $(this).text('🛑 Escuchando...').removeClass('btn-outline-dark').addClass('btn-danger');
+                        $(this).text('🛑 Escuchando... Clic para detener').removeClass('btn-outline-dark').addClass('btn-danger');
                     }
                 });
             }
 
             function onVoiceResult(text) {
                 $('#start-voice').text('🎤 Dictar Datos').removeClass('btn-danger').addClass('btn-outline-dark');
-                const data = VoiceTranscription.parseTranscript(text);
                 
-                if (data.colmena) $('#ColmenaId').val(data.colmena);
-                if (data.tratamiento) $('#field-tratamiento').val(data.tratamiento);
-                $('#field-observaciones').val(text);
+                if (textoPrevio.trim() !== '') {
+                    $('#field-observaciones').val(textoPrevio + '\n' + text);
+                } else {
+                    $('#field-observaciones').val(text);
+                }
                 
-                showNotification("Voz Procesada", "Se han extraído datos de la nota de voz.");
+                showNotification("Audio Transcrito", "El texto ha sido añadido a las observaciones.");
             }
         });
     </script>

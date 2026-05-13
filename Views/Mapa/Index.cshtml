@@ -6,6 +6,20 @@
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
+<div class="glass-card mb-3 p-3">
+    <h5 class="mb-3">Leyenda del Mapa</h5>
+    <div class="d-flex flex-wrap gap-4">
+        <div class="d-flex align-items-center">
+            <div style="width: 20px; height: 20px; background-color: #2b82cb; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.3); margin-right: 10px;"></div>
+            <span><strong>Icono Azul:</strong> Ubicación exacta del apiario.</span>
+        </div>
+        <div class="d-flex align-items-center">
+            <div style="width: 20px; height: 20px; background-color: rgba(242, 169, 0, 0.3); border: 2px solid #f2a900; border-radius: 50%; margin-right: 10px;"></div>
+            <span><strong>Círculo Amarillo:</strong> Radio de pecoreo (vuelo) de las abejas (aprox. 3km).</span>
+        </div>
+    </div>
+</div>
+
 <div class="glass-card p-0" style="overflow: hidden;">
     <div id="map" style="height: 600px; width: 100%;"></div>
 </div>

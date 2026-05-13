@@ -19,7 +19,7 @@ namespace BeeKeeperApp.Controllers
         {
             var extracciones = await _context.Extracciones
                 .Include(e => e.Colmena)
-                .ThenInclude(c => c.Apiario)
+                .ThenInclude(c => c!.Apiario)
                 .OrderByDescending(e => e.Fecha)
                 .ToListAsync();
 

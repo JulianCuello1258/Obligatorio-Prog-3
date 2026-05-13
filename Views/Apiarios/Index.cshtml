@@ -7,6 +7,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <p>
         <a asp-action="Create" class="btn btn-honey">+ Nuevo Apiario</a>
+        <a asp-action="Comparacion" class="btn btn-outline-info ms-2">Comparar Apiarios</a>
     </p>
     <div class="dropdown">
         <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -36,8 +37,10 @@
 
                 <div class="stats-grid mt-3">
                     <div class="stat-item">
-                        <div class="stat-value" style="font-size: 1.2rem;">@item.Colmenas.Count</div>
-                        <div class="stat-label">Colmenas</div>
+                        <a href="/Colmenas?apiarioId=@item.Id" class="text-decoration-none text-dark">
+                            <div class="stat-value text-honey hover-scale" style="font-size: 1.2rem;">@item.Colmenas.Count</div>
+                            <div class="stat-label">Colmenas</div>
+                        </a>
                     </div>
                 </div>
 

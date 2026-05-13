@@ -100,6 +100,29 @@ namespace BeeKeeperApp.Migrations
                     b.ToTable("Colmenas");
                 });
 
+            modelBuilder.Entity("BeeKeeperApp.Models.Entities.Exportacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CantidadBarriles")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Destino")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Exportaciones");
+                });
+
             modelBuilder.Entity("BeeKeeperApp.Models.Entities.Extraccion", b =>
                 {
                     b.Property<int>("Id")
@@ -155,11 +178,17 @@ namespace BeeKeeperApp.Migrations
                     b.Property<int>("ColmenaId")
                         .HasColumnType("int");
 
+                    b.Property<string>("DireccionViento")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Dosis")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Enfermedades")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Enjambrazon")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("datetime2");
@@ -167,11 +196,23 @@ namespace BeeKeeperApp.Migrations
                     b.Property<bool>("HayCrias")
                         .HasColumnType("bit");
 
+                    b.Property<double?>("Humedad")
+                        .HasColumnType("float");
+
+                    b.Property<string>("NivelInfestacion")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Observaciones")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Plagas")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PoblacionEstimada")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("Presion")
+                        .HasColumnType("float");
 
                     b.Property<DateTime?>("ProximaDosis")
                         .HasColumnType("datetime2");
@@ -182,11 +223,17 @@ namespace BeeKeeperApp.Migrations
                     b.Property<string>("ReinaSalud")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ResultadoTratamiento")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Sintomas")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Temperamento")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("Temperatura")
+                        .HasColumnType("float");
 
                     b.Property<string>("Tipo")
                         .IsRequired()
@@ -194,6 +241,9 @@ namespace BeeKeeperApp.Migrations
 
                     b.Property<string>("Tratamiento")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("VelocidadViento")
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -225,6 +275,10 @@ namespace BeeKeeperApp.Migrations
 
                     b.Property<DateTime>("FechaProgramada")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

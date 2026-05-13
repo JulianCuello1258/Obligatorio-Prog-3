@@ -27,7 +27,13 @@
             @foreach (var item in Model) {
                 <tr>
                     <td>#@item.Id</td>
-                    <td>@item.Apiario?.Nombre</td>
+                    <td>
+                        @if(item.ApiarioId > 0) {
+                            <a href="/Apiarios/Details/@item.ApiarioId" class="text-decoration-none fw-bold text-dark hover-honey">@item.Apiario?.Nombre</a>
+                        } else {
+                            <span class="text-muted">Sin asignar</span>
+                        }
+                    </td>
                     <td>
                         <span class="badge @(item.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Activa ? "bg-success" : "bg-danger")">
                             @item.Estado

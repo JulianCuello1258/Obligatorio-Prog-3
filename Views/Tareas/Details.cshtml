@@ -1,0 +1,51 @@
+@model BeeKeeperApp.Models.Entities.Tarea
+
+@{
+    ViewData["Title"] = "Detalles de Tarea";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="glass-card">
+            <h2>@Model.Titulo</h2>
+            <hr />
+            <dl class="row">
+                <dt class="col-sm-3">Fecha</dt>
+                <dd class="col-sm-9">@Model.FechaProgramada.ToShortDateString()</dd>
+
+                <dt class="col-sm-3">Descripción</dt>
+                <dd class="col-sm-9">@Model.Descripcion</dd>
+
+                <dt class="col-sm-3">Referencia</dt>
+                <dd class="col-sm-9">
+                    @if (Model.ColmenaId.HasValue) {
+                        <span>Colmena #@Model.ColmenaId</span>
+                    } else if (Model.ApiarioId.HasValue) {
+                        <span>Apiario @Model.Apiario?.Nombre (#@Model.ApiarioId)</span>
+                    } else {
+                        <span>Ninguna</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3">Estado</dt>
+                <dd class="col-sm-9">
+                    @if (Model.Completada) {
+                        <span class="badge bg-success">Completada</span>
+                    } else {
+                        <span class="badge bg-warning text-dark">Pendiente</span>
+                    }
+                </dd>
+            </dl>
+            
+            <div class="mt-4">
+                @if (!Model.Completada) {
+                    <form asp-action="MarkCompleted" method="post" style="display:inline">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="btn btn-honey me-2">Marcar como Completada</button>
+                    </form>
+                }
+                <a asp-action="Index" class="btn btn-secondary">Volver al listado</a>
+            </div>
+        </div>
+    </div>
+</div>

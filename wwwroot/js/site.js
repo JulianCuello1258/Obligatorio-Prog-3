@@ -32,9 +32,11 @@ $(document).ready(function() {
                 badge.text(data.length).show();
                 data.forEach(item => {
                     list.append(`
-                        <li class="p-2 border-bottom border-light">
-                            <div class="fw-bold small text-honey-dark">${item.descripcion}</div>
-                            <div class="text-muted" style="font-size: 10px;">Para: ${item.fecha}</div>
+                        <li>
+                            <a href="/Tareas/Details/${item.id}" class="dropdown-item p-2 border-bottom border-light" style="white-space: normal;">
+                                <div class="fw-bold small text-honey-dark">${item.titulo || item.descripcion}</div>
+                                <div class="text-muted" style="font-size: 10px;">Para: ${item.fecha}</div>
+                            </a>
                         </li>
                     `);
                 });

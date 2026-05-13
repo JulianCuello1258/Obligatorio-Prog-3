@@ -44,6 +44,29 @@
                     </div>
                 </div>
 
+                <hr class="mt-4 mb-4" />
+                <h5 class="mb-3 text-honey-dark">Información de la Reina</h5>
+                <div class="row">
+                    <div class="col-md-4 mb-3 d-flex align-items-center">
+                        <div class="form-check mt-4">
+                            <input asp-for="Reina.Presencia" class="form-check-input" type="checkbox" checked />
+                            <label class="form-check-label">Reina Presente</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Reina.Salud" class="form-label">Estado de Salud</label>
+                        <select asp-for="Reina.Salud" class="form-select">
+                            <option value="Buena">Buena</option>
+                            <option value="Regular">Regular</option>
+                            <option value="Mala">Mala</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Reina.FechaNacimiento" class="form-label">Fecha de Nacimiento</label>
+                        <input asp-for="Reina.FechaNacimiento" class="form-control" type="date" />
+                    </div>
+                </div>
+
                 <div class="mt-4">
                     <button type="submit" class="btn btn-honey w-100">Guardar Colmena</button>
                     <a asp-action="Index" class="btn btn-link w-100 mt-2">Volver</a>

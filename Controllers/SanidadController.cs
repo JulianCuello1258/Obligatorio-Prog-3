@@ -26,8 +26,33 @@ namespace BeeKeeperApp.Controllers
 
         public IActionResult Create(int? colmenaId)
         {
+            ViewBag.ApiarioId = new SelectList(_context.Apiarios, "Id", "Nombre");
             ViewBag.ColmenaId = new SelectList(_context.Colmenas, "Id", "Id", colmenaId);
             return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetColmenasByApiario(int apiarioId)
+        {
+            var colmenas = await _context.Colmenas
+                .Where(c => c.ApiarioId == apiarioId)
+                .Select(c => new { id = c.Id })
+                .ToListAsync();
+            return Json(colmenas);
+        }
+
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var revision = await _context.Revisiones
+                .Include(r => r.Colmena)
+                .ThenInclude(c => c!.Apiario)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (revision == null) return NotFound();
+
+            return View(revision);
         }
 
         [HttpPost]

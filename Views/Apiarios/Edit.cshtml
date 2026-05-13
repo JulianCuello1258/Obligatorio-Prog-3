@@ -1,0 +1,154 @@
+@model BeeKeeperApp.Models.Entities.Apiario
+
+@{
+    ViewData["Title"] = "Editar Apiario";
+}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="glass-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Editar Apiario</h2>
+                <span class="badge bg-warning text-dark fs-6 px-3 py-2 rounded-pill shadow-sm">
+                    <img src="/Images/colmenas.png" width="20" class="me-2" style="filter: brightness(0);" />
+                    @(Model.Colmenas?.Count ?? 0) Colmenas en este Apiario
+                </span>
+            </div>
+            <hr />
+            <form asp-action="Edit">
+                <input type="hidden" asp-for="Id" />
+                <div class="mb-3">
+                    <label asp-for="Nombre" class="form-label">Nombre</label>
+                    <input asp-for="Nombre" class="form-control" />
+                    <span asp-validation-for="Nombre" class="text-danger"></span>
+                </div>
+                <div class="row align-items-end mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="Latitud" class="form-label">Latitud</label>
+                        <input asp-for="Latitud" id="latInput" class="form-control" type="number" step="any" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Longitud" class="form-label">Longitud</label>
+                        <input asp-for="Longitud" id="lngInput" class="form-control" type="number" step="any" />
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-outline-dark w-100" data-bs-toggle="modal" data-bs-target="#mapModal">
+                            <img src="/Images/marcador-de-mapa.png" width="20" class="me-2" />
+                            Seleccionar en mapa
+                        </button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Departamento" class="form-label">Departamento</label>
+                        <input asp-for="Departamento" class="form-control" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Paraje" class="form-label">Paraje</label>
+                        <input asp-for="Paraje" class="form-control" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Tipo" class="form-label">Tipo de Apiario</label>
+                        <select asp-for="Tipo" class="form-select">
+                            <option value="Fijo">Fijo</option>
+                            <option value="Trasladable">Trasladable</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Zona" class="form-label">Zona</label>
+                        <select asp-for="Zona" class="form-select">
+                            <option value="Urbana">Urbana</option>
+                            <option value="Suburbana">Suburbana</option>
+                            <option value="Rural">Rural</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="SeccionPolicial" class="form-label">Sección Policial</label>
+                    <input asp-for="SeccionPolicial" class="form-control" />
+                </div>
+                <div class="mb-3 form-check">
+                    <input asp-for="TrashumanciaHabilitada" class="form-check-input" />
+                    <label asp-for="TrashumanciaHabilitada" class="form-check-label">Habilitado para Trashumancia</label>
+                </div>
+                <button type="submit" class="btn btn-honey w-100">Guardar Cambios</button>
+                <a asp-action="Index" class="btn btn-link w-100 text-center mt-2">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Map Modal -->
+<div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content glass-card border-0">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="mapModalLabel">Seleccionar Ubicación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div id="mapSelector" style="height: 300px; width: 100%; border-radius: 10px;"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-honey" data-bs-dismiss="modal">Confirmar Ubicación</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var map = null;
+            var marker = null;
+            
+            var mapModal = document.getElementById('mapModal');
+            document.body.appendChild(mapModal); // Move modal to body to avoid backdrop stacking issues
+            mapModal.addEventListener('shown.bs.modal', function () {
+                if (!map) {
+                    var initialLat = document.getElementById('latInput').value || -34.9011;
+                    var initialLng = document.getElementById('lngInput').value || -56.1645;
+                    
+                    map = L.map('mapSelector').setView([initialLat, initialLng], 10);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
+
+                    if (document.getElementById('latInput').value && document.getElementById('lngInput').value) {
+                        marker = L.marker([initialLat, initialLng]).addTo(map);
+                    }
+
+                    map.on('click', function(e) {
+                        if (marker) {
+                            marker.setLatLng(e.latlng);
+                        } else {
+                            marker = L.marker(e.latlng).addTo(map);
+                        }
+                        // Use string conversion with dot as decimal separator
+                        document.getElementById('latInput').value = e.latlng.lat.toFixed(6).replace(',', '.');
+                        document.getElementById('lngInput').value = e.latlng.lng.toFixed(6).replace(',', '.');
+                    });
+                } else {
+                    map.invalidateSize();
+                    var currentLat = document.getElementById('latInput').value || -34.9011;
+                    var currentLng = document.getElementById('lngInput').value || -56.1645;
+                    if (currentLat && currentLng) {
+                        map.setView([currentLat, currentLng], 10);
+                        if (marker) {
+                            marker.setLatLng([currentLat, currentLng]);
+                        } else {
+                            marker = L.marker([currentLat, currentLng]).addTo(map);
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

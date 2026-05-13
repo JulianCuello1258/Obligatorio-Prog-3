@@ -17,6 +17,7 @@ namespace BeeKeeperApp.Data
         public DbSet<Extraccion> Extracciones { get; set; }
         public DbSet<Tarea> Tareas { get; set; }
         public DbSet<Trashumancia> Trashumancias { get; set; }
+        public DbSet<Exportacion> Exportaciones { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

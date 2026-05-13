@@ -71,7 +71,9 @@ namespace BeeKeeperApp.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
-            var apiario = await _context.Apiarios.FindAsync(id);
+            var apiario = await _context.Apiarios
+                .Include(a => a.Colmenas)
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (apiario == null) return NotFound();
             return View(apiario);
         }
@@ -112,9 +114,31 @@ namespace BeeKeeperApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var apiario = await _context.Apiarios.FindAsync(id);
-            if (apiario != null) _context.Apiarios.Remove(apiario);
-            await _context.SaveChangesAsync();
+            var apiario = await _context.Apiarios
+                .Include(a => a.Colmenas)
+                .FirstOrDefaultAsync(a => a.Id == id);
+                
+            if (apiario != null) 
+            {
+                // Eliminar Tareas asociadas al Apiario
+                var tareasApiario = _context.Tareas.Where(t => t.ApiarioId == id);
+                _context.Tareas.RemoveRange(tareasApiario);
+
+                // Eliminar Tareas asociadas a las Colmenas del Apiario
+                var colmenaIds = apiario.Colmenas.Select(c => c.Id).ToList();
+                if (colmenaIds.Any())
+                {
+                    var tareasColmenas = _context.Tareas.Where(t => t.ColmenaId.HasValue && colmenaIds.Contains(t.ColmenaId.Value));
+                    _context.Tareas.RemoveRange(tareasColmenas);
+                }
+
+                // Eliminar Trashumancias asociadas
+                var trashumancias = _context.Trashumancias.Where(t => t.ApiarioOrigenId == id || t.ApiarioDestinoId == id);
+                _context.Trashumancias.RemoveRange(trashumancias);
+
+                _context.Apiarios.Remove(apiario);
+                await _context.SaveChangesAsync();
+            }
             return RedirectToAction(nameof(Index));
         }
 
@@ -122,5 +146,34 @@ namespace BeeKeeperApp.Controllers
         {
             return _context.Apiarios.Any(e => e.Id == id);
         }
+
+        // GET: Apiarios/Comparacion
+        public async Task<IActionResult> Comparacion()
+        {
+            var apiarios = await _context.Apiarios
+                .Include(a => a.Colmenas)
+                    .ThenInclude(c => c.Extracciones)
+                .ToListAsync();
+
+            var model = apiarios.Select(a => new ApiarioComparacionViewModel
+            {
+                Id = a.Id,
+                Nombre = a.Nombre,
+                TotalColmenas = a.Colmenas.Count,
+                ColmenasActivas = a.Colmenas.Count(c => c.Estado == EstadoColmena.Activa),
+                ProduccionTotal = a.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg)
+            }).OrderByDescending(x => x.ProduccionTotal).ToList();
+
+            return View(model);
+        }
+    }
+
+    public class ApiarioComparacionViewModel
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public int TotalColmenas { get; set; }
+        public int ColmenasActivas { get; set; }
+        public double ProduccionTotal { get; set; }
     }
 }

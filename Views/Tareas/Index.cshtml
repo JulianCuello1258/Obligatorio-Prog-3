@@ -17,6 +17,7 @@
                 <thead>
                     <tr>
                         <th>Fecha</th>
+                        <th>Título</th>
                         <th>Descripción</th>
                         <th>Referencia</th>
                         <th>Estado</th>
@@ -27,6 +28,7 @@
                     @foreach (var item in Model) {
                         <tr class="@(item.FechaProgramada < DateTime.Now && !item.Completada ? "table-danger" : "")">
                             <td>@item.FechaProgramada.ToShortDateString()</td>
+                            <td><strong>@item.Titulo</strong></td>
                             <td>@item.Descripcion</td>
                             <td>
                                 @if (item.ColmenaId.HasValue) {
@@ -44,6 +46,7 @@
                             </td>
                             <td>
                                 @if (!item.Completada) {
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info me-2">Ver Detalles</a>
                                     <form asp-action="MarkCompleted" method="post" style="display:inline">
                                         <input type="hidden" name="id" value="@item.Id" />
                                         <button type="submit" class="btn btn-sm btn-honey">Completar</button>
