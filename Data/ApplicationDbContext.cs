@@ -24,6 +24,9 @@ namespace BeeKeeperApp.Data
             base.OnModelCreating(modelBuilder);
 
             // Configure relationships
+            modelBuilder.Entity<Reina>()
+                .HasKey(r => r.ColmenaId);
+
             modelBuilder.Entity<Colmena>()
                 .HasOne(c => c.Reina)
                 .WithOne(r => r.Colmena)
@@ -40,6 +43,59 @@ namespace BeeKeeperApp.Data
                 .WithMany()
                 .HasForeignKey(t => t.ApiarioDestinoId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Enum conversions
+            modelBuilder.Entity<Apiario>()
+                .Property(a => a.Tipo)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Colmena>()
+                .Property(c => c.Estado)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Revision>()
+                .Property(r => r.Tipo)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Colmena>()
+                .Property(c => c.Poblacion)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Revision>()
+                .Property(r => r.PoblacionEstimada)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Colmena>()
+                .Property(c => c.Temperamento)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Revision>()
+                .Property(r => r.Temperamento)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Reina>()
+                .Property(r => r.Salud)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Revision>()
+                .Property(r => r.ReinaSalud)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Revision>()
+                .Property(r => r.NivelInfestacion)
+                .HasConversion<string>();
+
+            // Value Objects
+            modelBuilder.Entity<Revision>()
+                .OwnsOne(r => r.CondicionesClimaticas, cb =>
+                {
+                    cb.ToTable("Clima");
+                    cb.Property(c => c.Temperatura).HasColumnName("Temperatura");
+                    cb.Property(c => c.Humedad).HasColumnName("Humedad");
+                    cb.Property(c => c.Presion).HasColumnName("Presion");
+                    cb.Property(c => c.VelocidadViento).HasColumnName("VelocidadViento");
+                    cb.Property(c => c.DireccionViento).HasColumnName("DireccionViento");
+                });
         }
     }
 }

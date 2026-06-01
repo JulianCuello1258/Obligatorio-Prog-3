@@ -24,17 +24,17 @@
                     <div class="mb-3">
                         <label for="Salud" class="form-label fw-bold">Estado de Salud</label>
                         <select id="Salud" name="Salud" class="form-select">
-                            @if(Model.Reina?.Salud == "Buena") {
+                            @if(Model.Reina?.Salud == BeeKeeperApp.Models.Entities.SaludReina.Buena) {
                                 <option value="Buena" selected>Buena</option>
                             } else {
                                 <option value="Buena">Buena</option>
                             }
-                            @if(Model.Reina?.Salud == "Regular") {
+                            @if(Model.Reina?.Salud == BeeKeeperApp.Models.Entities.SaludReina.Regular) {
                                 <option value="Regular" selected>Regular</option>
                             } else {
                                 <option value="Regular">Regular</option>
                             }
-                            @if(Model.Reina?.Salud == "Mala") {
+                            @if(Model.Reina?.Salud == BeeKeeperApp.Models.Entities.SaludReina.Mala) {
                                 <option value="Mala" selected>Mala</option>
                             } else {
                                 <option value="Mala">Mala</option>

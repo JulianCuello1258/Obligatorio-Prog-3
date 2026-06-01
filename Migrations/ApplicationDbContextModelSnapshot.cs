@@ -51,8 +51,9 @@ namespace BeeKeeperApp.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Tipo")
-                        .HasColumnType("int");
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("TrashumanciaHabilitada")
                         .HasColumnType("bit");
@@ -77,8 +78,9 @@ namespace BeeKeeperApp.Migrations
                     b.Property<int>("ApiarioId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Estado")
-                        .HasColumnType("int");
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime2");
@@ -137,12 +139,17 @@ namespace BeeKeeperApp.Migrations
                     b.Property<int>("ColmenaId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ExportacionId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ColmenaId");
+
+                    b.HasIndex("ExportacionId");
 
                     b.ToTable("Extracciones");
                 });
@@ -178,9 +185,6 @@ namespace BeeKeeperApp.Migrations
                     b.Property<int>("ColmenaId")
                         .HasColumnType("int");
 
-                    b.Property<string>("DireccionViento")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Dosis")
                         .HasColumnType("nvarchar(max)");
 
@@ -196,9 +200,6 @@ namespace BeeKeeperApp.Migrations
                     b.Property<bool>("HayCrias")
                         .HasColumnType("bit");
 
-                    b.Property<double?>("Humedad")
-                        .HasColumnType("float");
-
                     b.Property<string>("NivelInfestacion")
                         .HasColumnType("nvarchar(max)");
 
@@ -210,9 +211,6 @@ namespace BeeKeeperApp.Migrations
 
                     b.Property<string>("PoblacionEstimada")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<double?>("Presion")
-                        .HasColumnType("float");
 
                     b.Property<DateTime?>("ProximaDosis")
                         .HasColumnType("datetime2");
@@ -232,18 +230,12 @@ namespace BeeKeeperApp.Migrations
                     b.Property<string>("Temperamento")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double?>("Temperatura")
-                        .HasColumnType("float");
-
                     b.Property<string>("Tipo")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Tratamiento")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<double?>("VelocidadViento")
-                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -337,7 +329,13 @@ namespace BeeKeeperApp.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BeeKeeperApp.Models.Entities.Exportacion", "Exportacion")
+                        .WithMany("Extracciones")
+                        .HasForeignKey("ExportacionId");
+
                     b.Navigation("Colmena");
+
+                    b.Navigation("Exportacion");
                 });
 
             modelBuilder.Entity("BeeKeeperApp.Models.Entities.Reina", b =>
@@ -359,7 +357,42 @@ namespace BeeKeeperApp.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsOne("BeeKeeperApp.Models.Entities.Clima", "CondicionesClimaticas", b1 =>
+                        {
+                            b1.Property<int>("RevisionId")
+                                .HasColumnType("int");
+
+                            b1.Property<string>("DireccionViento")
+                                .HasColumnType("nvarchar(max)")
+                                .HasColumnName("DireccionViento");
+
+                            b1.Property<double?>("Humedad")
+                                .HasColumnType("float")
+                                .HasColumnName("Humedad");
+
+                            b1.Property<double?>("Presion")
+                                .HasColumnType("float")
+                                .HasColumnName("Presion");
+
+                            b1.Property<double?>("Temperatura")
+                                .HasColumnType("float")
+                                .HasColumnName("Temperatura");
+
+                            b1.Property<double?>("VelocidadViento")
+                                .HasColumnType("float")
+                                .HasColumnName("VelocidadViento");
+
+                            b1.HasKey("RevisionId");
+
+                            b1.ToTable("Clima", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("RevisionId");
+                        });
+
                     b.Navigation("Colmena");
+
+                    b.Navigation("CondicionesClimaticas");
                 });
 
             modelBuilder.Entity("BeeKeeperApp.Models.Entities.Tarea", b =>
@@ -410,6 +443,11 @@ namespace BeeKeeperApp.Migrations
                     b.Navigation("Revisiones");
 
                     b.Navigation("Tareas");
+                });
+
+            modelBuilder.Entity("BeeKeeperApp.Models.Entities.Exportacion", b =>
+                {
+                    b.Navigation("Extracciones");
                 });
 #pragma warning restore 612, 618
         }

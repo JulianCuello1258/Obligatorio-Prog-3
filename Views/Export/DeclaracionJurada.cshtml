@@ -12,137 +12,355 @@
 <html lang="es">
 <head>
     <meta charset="utf-8" />
+    <title>Declaración Jurada - Registro Nacional de Apicultores</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.4; color: #000; max-width: 900px; margin: 0 auto; }
-        .print-btn { background: #007bff; color: white; padding: 12px 24px; border: none; cursor: pointer; margin-bottom: 20px; font-size: 16px; border-radius: 4px; display: block; margin-left: auto; margin-right: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .print-btn:hover { background: #0056b3; }
-        @@media print { 
-            .print-btn { display: none; } 
-            body { padding: 0; max-width: 100%; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; line-height: 1.4; color: #000; background-color: #ffffff; }
+
+        /* ===== SCREEN ONLY ===== */
+        @@media screen {
+            body { padding: 30px; max-width: 900px; margin: 0 auto; background-color: #ffffff; }
+            #form-print { display: none; }
+            #form-screen { display: block; }
+            .print-btn {
+                display: block;
+                margin: 24px auto 0;
+                background: #007bff;
+                color: white;
+                padding: 12px 30px;
+                border: none;
+                cursor: pointer;
+                font-size: 16px;
+                border-radius: 4px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            }
+            .print-btn:hover { background: #0056b3; }
+            
+            .s-section {
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                border-radius: 4px;
+                overflow: hidden;
+            }
         }
-        
-        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .logos { display: flex; align-items: center; width: 100%; justify-content: space-between; }
-        
-        .title-section { text-align: center; margin-bottom: 30px; }
-        .title-section h1 { font-size: 22px; font-weight: normal; margin: 0; letter-spacing: 1px; }
-        .title-section h2 { font-size: 18px; font-weight: bold; margin: 8px 0; }
-        .title-section h3 { font-size: 12px; font-weight: bold; margin: 0; }
-        
-        .meta-info { display: flex; justify-content: space-between; margin-bottom: 30px; padding: 0 40px; font-size: 13px; }
-        .meta-column { display: flex; flex-direction: column; gap: 5px; }
-        
-        .section { margin-bottom: 20px; }
-        .section-title { background-color: #dbdbdb; padding: 12px 15px; font-weight: bold; font-size: 18px; margin: 0 0 15px 0; }
-        .bg-light-gray { background-color: #f0f0f0; padding-bottom: 20px; }
-        
-        .form-row { display: flex; flex-wrap: wrap; gap: 30px; margin-bottom: 20px; padding: 0 15px; }
-        .form-group { display: flex; flex-direction: column; flex: 1; min-width: 200px; }
-        .form-group label { font-size: 11px; color: #333; margin-top: 5px; }
-        .form-group input { border: none; border-bottom: 1px solid #000; padding: 5px 0; font-size: 14px; font-family: inherit; font-weight: bold; outline: none; background: transparent; }
-        
-        .footer-note { margin-top: 40px; font-size: 10px; border: 1px solid #000; background-color: #e6e6e6; padding: 10px; text-align: justify; }
-        .footer-note-light { font-size: 10px; background-color: #f2f2f2; padding: 10px; text-align: justify; border: 1px solid #000; border-top: none; }
+        /* ===== PRINT ONLY ===== */
+        @@media print {
+            body { 
+                padding: 0; 
+                max-width: 100%; 
+                background-color: #ffffff !important;
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
+            }
+            #form-screen { display: none !important; }
+            #form-print { display: block !important; }
+            .print-btn { display: none !important; }
+        }
+
+        /* ===== SHARED STYLES (header/title/meta shown in both) ===== */
+        .shared-top { }
+
+        .header-img { max-width: 100%; height: auto; display: block; margin-bottom: 10px; }
+
+        .title-section { text-align: center; margin-bottom: 24px; margin-top: 10px; }
+        .title-section h1 { font-size: 22px; font-weight: bold; margin: 0; letter-spacing: 1px; }
+        .title-section h2 { font-size: 17px; font-weight: bold; margin: 6px 0 2px; }
+        .title-section h3 { font-size: 12px; font-weight: normal; margin: 0; }
+
+        .meta-info { display: flex; justify-content: space-between; margin-bottom: 24px; padding: 0 20px; font-size: 13px; }
+        .meta-column { display: flex; flex-direction: column; gap: 4px; }
+
+        /* ===== SCREEN FORM STYLES ===== */
+        .s-section { margin-bottom: 18px; }
+        .s-section-title { background-color: #dbdbdb; padding: 12px 20px; font-weight: bold; font-size: 16px; }
+        .s-content { padding: 16px 20px; background-color: #ffffff; }
+        .s-content-gray { background-color: #f5f5f5; }
+        .s-row { display: flex; gap: 24px; margin-bottom: 14px; flex-wrap: wrap; }
+        .s-group { display: flex; flex-direction: column; flex: 1; min-width: 180px; }
+        .s-group label { font-size: 11px; color: #555; margin-bottom: 4px; }
+        .s-group input {
+            border: none;
+            border-bottom: 1px solid #333;
+            padding: 4px 0;
+            font-size: 14px;
+            font-weight: bold;
+            outline: none;
+            background: transparent;
+            font-family: Arial, sans-serif;
+        }
+        .s-group input[readonly] { border-bottom: none; color: #333; }
+
+        /* ===== PRINT DOCUMENT STYLES ===== */
+        #form-print { display: none; font-family: Arial, sans-serif; color: #000; }
+
+        .p-section { margin-bottom: 16px; }
+        .p-section-title { background-color: #dbdbdb; padding: 12px 20px; font-weight: bold; font-size: 16px; margin-bottom: 0; }
+        .p-content { padding: 16px 20px; background-color: #ffffff; }
+        .p-content-gray { background-color: #f5f5f5; }
+
+        /* Name row (Section A) */
+        .p-name { font-size: 15px; font-weight: bold; margin-bottom: 14px; min-height: 20px; }
+
+        /* Row of label+value pairs */
+        .p-row { display: flex; gap: 40px; margin-bottom: 12px; }
+        .p-field { display: flex; flex-direction: column; flex: 1; }
+        .p-label { font-size: 11px; color: #333; margin-bottom: 2px; }
+        .p-value { font-size: 14px; font-weight: bold; min-height: 18px; }
+
+        /* Section B top row: values inline */
+        .p-inline-row { display: flex; gap: 30px; margin-bottom: 14px; }
+        .p-inline-item { flex: 1; font-size: 14px; font-weight: bold; }
+
+        .footer-note {
+            margin-top: 36px;
+            font-size: 10px;
+            border: 1px solid #000;
+            background-color: #e6e6e6;
+            padding: 9px;
+            text-align: justify;
+        }
+        .footer-note-light {
+            font-size: 10px;
+            background-color: #f2f2f2;
+            padding: 9px;
+            text-align: justify;
+            border: 1px solid #000;
+            border-top: none;
+        }
+        .page-num { text-align: right; font-size: 10px; margin-top: 12px; }
     </style>
 </head>
 <body>
-    <div class="header-container">
-        <img src="/Images/Formulario-Min-Ganaderia-Cabecera.PNG" width="900" style="display: flex; justify-content: center" />
-    </div>
 
-    <div class="title-section">
-        <h1>REGISTRO NACIONAL DE APICULTORES</h1>
-        <h2>Declaración Jurada @hoy.Year</h2>
-        <h3>Período 01/07/@hoy.Year - 31/07/@hoy.Year</h3>
-    </div>
+    <!-- ========================== -->
+    <!--   SHARED: header + title   -->
+    <!-- ========================== -->
+    <div class="shared-top">
+        <img class="header-img" src="/Images/Formulario-Min-Ganaderia-Cabecera.PNG" />
 
-    <div class="meta-info">
-        <div class="meta-column">
-            <div>Número de RNA: <strong>@rna</strong></div>
-            <div>Fecha de aprobación de Declaración: <strong>@hoy.ToString("dd/MM/yyyy")</strong></div>
+        <div class="title-section">
+            <h1>REGISTRO NACIONAL DE APICULTORES</h1>
+            <h2>Declaración Jurada @hoy.Year</h2>
+            <h3>Período 01/07/@hoy.Year - 31/07/@hoy.Year</h3>
         </div>
-        <div class="meta-column" style="margin-right: 80px;">
-            <div>Válida hasta: <strong>@validaHasta.ToString("dd/MM/yyyy")</strong></div>
-            <div>Estado: <strong>Aprobada</strong></div>
-        </div>
-    </div>
 
-    <div class="section">
-        <div class="section-title">A. PERSONA FÍSICA O JURÍDICA</div>
-        <div class="form-row">
-            <div class="form-group">
-                <input type="text" id="nombreApellidoApicultor" value="" placeholder="" />
-                <label for="nombreApellidoApicultor">Nombre y Apellido del apicultor</label>
+        <div class="meta-info">
+            <div class="meta-column">
+                <div>Número de RNA: <strong>@rna</strong></div>
+                <div>Fecha de aprobación de Declaración: <strong>@hoy.ToString("dd/MM/yyyy")</strong></div>
             </div>
-            <div class="form-group">
-                <input type="date" id="fechaNacimiento" value="" placeholder="" />
-                <label for="fechaNacimiento">Fecha de nacimiento</label>
-            </div>
-            <div class="form-group">
-                <input type="text" id="documento" value="" placeholder="" />
-                <label for="documento">Documento de identidad</label>
+            <div class="meta-column">
+                <div>Válida hasta: <strong>@validaHasta.ToString("dd/MM/yyyy")</strong></div>
+                <div>Estado: <strong>Aprobada</strong></div>
             </div>
         </div>
     </div>
 
-    <div class="section bg-light-gray">
-        <div class="section-title">B. DOMICILIO</div>
-        <div class="form-row">
-            <div class="form-group">
-                <input type="text" id="colonia" />
-                <label for="colonia">Departamento</label>
-            </div>
-            <div class="form-group">
-                <input type="text" id="seccion" />
-                <label for="seccion">Sección policial</label>
-            </div>
-            <div class="form-group">
-                <input type="text" id="camino" />
-                <label for="camino">Dirección / camino</label>
+    <!-- ========================== -->
+    <!--    SCREEN: Editable Form   -->
+    <!-- ========================== -->
+    <div id="form-screen">
+
+        <!-- SECTION A -->
+        <div class="s-section">
+            <div class="s-section-title">A. PERSONA FÍSICA O JURÍDICA</div>
+            <div class="s-content s-content-gray">
+                <div class="s-row">
+                    <div class="s-group" style="flex:2;">
+                        <label for="nombreApellidoApicultor">Nombre y Apellido del apicultor</label>
+                        <input type="text" id="nombreApellidoApicultor" />
+                    </div>
+                </div>
+                <div class="s-row">
+                    <div class="s-group">
+                        <label for="fechaNacimiento">Fecha de nacimiento</label>
+                        <input type="date" id="fechaNacimiento" />
+                    </div>
+                    <div class="s-group">
+                        <label for="documento">Documento de identidad</label>
+                        <input type="text" id="documento" />
+                    </div>
+                    <div class="s-group"></div>
+                </div>
             </div>
         </div>
-        <div class="form-row">
-            <div class="form-group">
-                <input type="text" id="celPrincipal" value="" />
-                <label for="celPrincipal">Celular de contacto principal</label>
+
+        <!-- SECTION B -->
+        <div class="s-section">
+            <div class="s-section-title">B. DOMICILIO</div>
+            <div class="s-content s-content-gray">
+                <div class="s-row">
+                    <div class="s-group">
+                        <label for="colonia">Departamento / Localidad</label>
+                        <input type="text" id="colonia" />
+                    </div>
+                    <div class="s-group">
+                        <label for="seccion">Sección policial</label>
+                        <input type="text" id="seccion" />
+                    </div>
+                    <div class="s-group">
+                        <label for="camino">Dirección / Camino</label>
+                        <input type="text" id="camino" />
+                    </div>
+                </div>
+                <div class="s-row">
+                    <div class="s-group">
+                        <label for="celPrincipal">Celular de contacto principal</label>
+                        <input type="text" id="celPrincipal" />
+                    </div>
+                    <div class="s-group">
+                        <label for="celSecundario">Celular de contacto secundario (Opcional)</label>
+                        <input type="text" id="celSecundario" />
+                    </div>
+                    <div class="s-group">
+                        <label for="email">Correo electrónico</label>
+                        <input type="text" id="email" />
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <input type="text" id="celSecundario" value="" />
-                <label for="celSecundario">Celular de contacto secundario (Opcional)</label>
-            </div>
-            <div class="form-group">
-                <input type="text" id="email" value="" />
-                <label for="email">Correo electrónico</label>
-            </div>
-            
         </div>
-    </div>
 
-    <div class="section bg-light-gray" style="margin-bottom: 0;">
-        <div class="section-title">C. STOCK APÍCOLA</div>
-        <div class="form-row">
-            <div class="form-group">
-                <input type="text" id="colmenas" value="@totalColmenas" readonly style="border-bottom:none" />
-                <label for="colmenas">Cantidad de colmenas en propiedad</label>
-            </div>
-            <div class="form-group">
-                <input type="text" id="nucleos" value="0" style="border-bottom:none" />
-                <label for="nucleos">Cantidad de núcleos</label>
-            </div>
-            <div class="form-group">
+        <!-- SECTION C -->
+        <div class="s-section">
+            <div class="s-section-title">C. STOCK APÍCOLA</div>
+            <div class="s-content s-content-gray">
+                <div class="s-row">
+                    <div class="s-group">
+                        <label for="colmenas">Cantidad de colmenas en propiedad</label>
+                        <input type="text" id="colmenas" value="@totalColmenas" readonly />
+                    </div>
+                    <div class="s-group">
+                        <label for="nucleos">Cantidad de núcleos</label>
+                        <input type="text" id="nucleos" value="0" />
+                    </div>
+                    <div class="s-group"></div>
+                </div>
             </div>
         </div>
+
+        <div class="footer-note">
+            <strong>La presente declaración jurada está exonerada del pago del timbre de la Caja de Jubilaciones y Pensiones de Profesionales Universitarios, según Ley 19.535 del 25 de setiembre de 2017, Art. 93.</strong>
+        </div>
+        <div class="footer-note-light">
+            Se deja constancia que la información proporcionada en este formulario tiene carácter de declaración jurada, con sujeción a las sanciones legalmente establecidas y será de carácter reservado. Según la Ley 18.719 del año 2010, Art. 380, y Decreto Reglamentario 371 del año 2013, Art. 1, 2, 7 y 8, los titulares de las explotaciones apícolas deberán actualizar sus datos al menos una vez al año bajo el régimen de declaración jurada. Una vez confirmada su declaración podrá descargar una copia de su declaración jurada.
+        </div>
+
+        <button class="print-btn" onclick="prepararYImprimir()">🖨️ Imprimir / Guardar Declaración</button>
     </div>
 
-    <div class="footer-note">
-        <strong>La presente declaración jurada está exonerada del pago del timbre de la Caja de Jubilaciones y Pensiones de Profesionales Universitarios, según Ley 19.535 del 25 de setiembre de 2017, Art. 93.</strong>
-    </div>
-    <div class="footer-note-light">
-        Se deja constancia que la información proporcionada en este formulario tiene carácter de declaración jurada, con sujeción a las sanciones legalmente establecidas y será de carácter reservado. Según la Ley 18.719 del año 2010, Art. 380, y Decreto Reglamentario 371 del año 2013, Art. 1, 2, 7 y 8, los titulares de las explotaciones apícolas deberán actualizar sus datos al menos una vez al año bajo el régimen de declaración jurada. Una vez confirmada su declaración podrá descargar una copia de su declaración jurada.
+    <!-- ========================== -->
+    <!--   PRINT: Document Layout   -->
+    <!-- ========================== -->
+    <div id="form-print">
+
+        <!-- SECTION A -->
+        <div class="p-section">
+            <div class="p-section-title">A. PERSONA FÍSICA O JURÍDICA</div>
+            <div class="p-content p-content-gray">
+                <div class="p-name" id="p-nombre"></div>
+                <div class="p-row">
+                    <div class="p-field">
+                        <span class="p-label">Fecha de nacimiento</span>
+                        <span class="p-value" id="p-fecha"></span>
+                    </div>
+                    <div class="p-field">
+                        <span class="p-label">Documento de identidad</span>
+                        <span class="p-value" id="p-documento"></span>
+                    </div>
+                    <div class="p-field"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION B -->
+        <div class="p-section">
+            <div class="p-section-title">B. DOMICILIO</div>
+            <div class="p-content p-content-gray">
+                <div class="p-inline-row">
+                    <div class="p-inline-item" id="p-colonia"></div>
+                    <div class="p-inline-item" id="p-seccion"></div>
+                    <div class="p-inline-item" id="p-camino"></div>
+                </div>
+                <div class="p-row">
+                    <div class="p-field">
+                        <span class="p-label">Celular de contacto principal</span>
+                        <span class="p-value" id="p-cel1"></span>
+                    </div>
+                    <div class="p-field">
+                        <span class="p-label">Celular de contacto secundario</span>
+                        <span class="p-value" id="p-cel2"></span>
+                    </div>
+                    <div class="p-field">
+                        <span class="p-label">Correo electrónico</span>
+                        <span class="p-value" id="p-email"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION C -->
+        <div class="p-section">
+            <div class="p-section-title">C. STOCK APÍCOLA</div>
+            <div class="p-content p-content-gray">
+                <div class="p-row">
+                    <div class="p-field">
+                        <span class="p-label">Cantidad de colmenas en propiedad</span>
+                        <span class="p-value" id="p-colmenas"></span>
+                    </div>
+                    <div class="p-field">
+                        <span class="p-label">Cantidad de núcleos</span>
+                        <span class="p-value" id="p-nucleos"></span>
+                    </div>
+                    <div class="p-field"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            <strong>La presente declaración jurada está exonerada del pago del timbre de la Caja de Jubilaciones y Pensiones de Profesionales Universitarios, según Ley 19.535 del 25 de setiembre de 2017, Art. 93.</strong>
+        </div>
+        <div class="footer-note-light">
+            Se deja constancia que la información proporcionada en este formulario tiene carácter de declaración jurada, con sujeción a las sanciones legalmente establecidas y será de carácter reservado. Según la Ley 18.719 del año 2010, Art. 380, y Decreto Reglamentario 371 del año 2013, Art. 1, 2, 7 y 8, los titulares de las explotaciones apícolas deberán actualizar sus datos al menos una vez al año bajo el régimen de declaración jurada. Una vez confirmada su declaración podrá descargar una copia de su declaración jurada.
+        </div>
+        <div class="page-num">1/2</div>
     </div>
 
-    <br />
-    <button class="print-btn" onclick="window.print()">🖨️ Imprimir Declaración</button>
+    <script>
+        function formatearFecha(val) {
+            if (!val) return '';
+            var parts = val.split('-');
+            if (parts.length === 3) {
+                return parseInt(parts[2]) + '/' + parseInt(parts[1]) + '/' + parts[0];
+            }
+            return val;
+        }
+
+        function sincronizarDatos() {
+            document.getElementById('p-nombre').textContent    = document.getElementById('nombreApellidoApicultor').value || '';
+            document.getElementById('p-fecha').textContent     = formatearFecha(document.getElementById('fechaNacimiento').value);
+            document.getElementById('p-documento').textContent = document.getElementById('documento').value || '';
+
+            var colonia = document.getElementById('colonia').value || '';
+            var seccion = document.getElementById('seccion').value || '';
+            var camino  = document.getElementById('camino').value || '';
+            document.getElementById('p-colonia').textContent  = colonia ? 'Colonia / ' + colonia.toUpperCase() : '';
+            document.getElementById('p-seccion').textContent  = seccion ? 'Sección policial ' + seccion : '';
+            document.getElementById('p-camino').textContent   = camino;
+
+            document.getElementById('p-cel1').textContent    = document.getElementById('celPrincipal').value || '';
+            document.getElementById('p-cel2').textContent    = document.getElementById('celSecundario').value || '';
+            document.getElementById('p-email').textContent   = document.getElementById('email').value || '';
+
+            document.getElementById('p-colmenas').textContent = document.getElementById('colmenas').value || '0';
+            document.getElementById('p-nucleos').textContent  = document.getElementById('nucleos').value || '0';
+        }
+
+        function prepararYImprimir() {
+            sincronizarDatos();
+            window.print();
+        }
+
+        window.addEventListener('beforeprint', sincronizarDatos);
+    </script>
 
 </body>
 </html>

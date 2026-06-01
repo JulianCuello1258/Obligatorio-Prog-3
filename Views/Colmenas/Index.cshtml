@@ -42,7 +42,7 @@
                     <td>@item.Tipo</td>
                     <td>@item.Poblacion</td>
                     <td>
-                        @(item.Reina?.Presencia == true ? "✅ Presente" : "❌ Ausente")
+                        @(item.Reina?.Presencia == true ? $"✅ Presente (ID: {item.Reina.ColmenaId})" : "❌ Ausente")
                     </td>
                     <td>
                         <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark">Detalles</a>

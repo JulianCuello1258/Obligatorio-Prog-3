@@ -37,6 +37,9 @@
                 
                 @if(Model.Reina?.Presencia == true)
                 {
+                    <dt class="col-sm-3">ID de la Reina</dt>
+                    <dd class="col-sm-9">@Model.Reina?.ColmenaId</dd>
+
                     <dt class="col-sm-3">Estado de Salud</dt>
                     <dd class="col-sm-9">@Model.Reina?.Salud</dd>
 

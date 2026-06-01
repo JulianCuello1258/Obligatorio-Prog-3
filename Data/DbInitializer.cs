@@ -9,7 +9,7 @@ namespace BeeKeeperApp.Data
     {
         public static void Initialize(ApplicationDbContext context)
         {
-            context.Database.EnsureCreated();
+            context.Database.Migrate();
 
             // Look for any Apiarios.
             if (context.Apiarios.Any())
@@ -31,21 +31,21 @@ namespace BeeKeeperApp.Data
 
             var colmenas = new Colmena[]
             {
-                new Colmena { ApiarioId = apiarioNorteId, Estado = EstadoColmena.Activa, Tipo = "Langstroth", Poblacion = "Fuerte", Temperamento = "Mansa", FechaCreacion = DateTime.Now.AddMonths(-6) },
-                new Colmena { ApiarioId = apiarioNorteId, Estado = EstadoColmena.Activa, Tipo = "Langstroth", Poblacion = "Media", Temperamento = "Agresiva", FechaCreacion = DateTime.Now.AddMonths(-5) },
-                new Colmena { ApiarioId = apiarioNorteId, Estado = EstadoColmena.Inactiva, Tipo = "Dadant", Poblacion = "Debil", Temperamento = "Mansa", FechaCreacion = DateTime.Now.AddMonths(-4) },
-                new Colmena { ApiarioId = apiarioSurId, Estado = EstadoColmena.Activa, Tipo = "Langstroth", Poblacion = "Fuerte", Temperamento = "Mansa", FechaCreacion = DateTime.Now.AddMonths(-2) },
-                new Colmena { ApiarioId = apiarioSurId, Estado = EstadoColmena.Perdida, Tipo = "Dadant", Poblacion = "Perdida", Temperamento = "Desconocido", FechaCreacion = DateTime.Now.AddMonths(-10) }
+                new Colmena { ApiarioId = apiarioNorteId, Estado = EstadoColmena.Activa, Tipo = "Langstroth", Poblacion = NivelPoblacion.Fuerte, Temperamento = TipoTemperamento.Mansa, FechaCreacion = DateTime.UtcNow.AddMonths(-6) },
+                new Colmena { ApiarioId = apiarioNorteId, Estado = EstadoColmena.Activa, Tipo = "Langstroth", Poblacion = NivelPoblacion.Media, Temperamento = TipoTemperamento.Agresiva, FechaCreacion = DateTime.UtcNow.AddMonths(-5) },
+                new Colmena { ApiarioId = apiarioNorteId, Estado = EstadoColmena.Inactiva, Tipo = "Dadant", Poblacion = NivelPoblacion.Debil, Temperamento = TipoTemperamento.Mansa, FechaCreacion = DateTime.UtcNow.AddMonths(-4) },
+                new Colmena { ApiarioId = apiarioSurId, Estado = EstadoColmena.Activa, Tipo = "Langstroth", Poblacion = NivelPoblacion.Fuerte, Temperamento = TipoTemperamento.Mansa, FechaCreacion = DateTime.UtcNow.AddMonths(-2) },
+                new Colmena { ApiarioId = apiarioSurId, Estado = EstadoColmena.Perdida, Tipo = "Dadant", Poblacion = null, Temperamento = null, FechaCreacion = DateTime.UtcNow.AddMonths(-10) }
             };
             context.Colmenas.AddRange(colmenas);
             context.SaveChanges();
 
             var reinas = new Reina[]
             {
-                new Reina { ColmenaId = colmenas[0].Id, Salud = "Buena", Presencia = true, FechaNacimiento = DateTime.Now.AddMonths(-5) },
-                new Reina { ColmenaId = colmenas[1].Id, Salud = "Regular", Presencia = true, FechaNacimiento = DateTime.Now.AddMonths(-4) },
-                new Reina { ColmenaId = colmenas[2].Id, Salud = "Mala", Presencia = false },
-                new Reina { ColmenaId = colmenas[3].Id, Salud = "Excelente", Presencia = true, FechaNacimiento = DateTime.Now.AddMonths(-1) }
+                new Reina { ColmenaId = colmenas[0].Id, Salud = SaludReina.Buena, Presencia = true, FechaNacimiento = DateTime.UtcNow.AddMonths(-5) },
+                new Reina { ColmenaId = colmenas[1].Id, Salud = SaludReina.Regular, Presencia = true, FechaNacimiento = DateTime.UtcNow.AddMonths(-4) },
+                new Reina { ColmenaId = colmenas[2].Id, Salud = SaludReina.Mala, Presencia = false },
+                new Reina { ColmenaId = colmenas[3].Id, Salud = SaludReina.Buena, Presencia = true, FechaNacimiento = DateTime.UtcNow.AddMonths(-1) }
                 // Colmena 4 is Perdida, maybe no queen
             };
             context.Reinas.AddRange(reinas);
@@ -53,34 +53,34 @@ namespace BeeKeeperApp.Data
 
             var revisiones = new Revision[]
             {
-                new Revision { ColmenaId = colmenas[0].Id, Fecha = DateTime.Now.AddDays(-15), Tipo = "Rutinaria", Observaciones = "Todo en orden", ReinaPresente = true, HayCrias = true, PoblacionEstimada = "Fuerte", Temperamento = "Mansa" },
-                new Revision { ColmenaId = colmenas[1].Id, Fecha = DateTime.Now.AddDays(-10), Tipo = "Sanitaria", Observaciones = "Presencia de varroa", Sintomas = "Abejas deformes", Enfermedades = "Varroasis", Tratamiento = "Ácido oxálico", Dosis = "5ml", ProximaDosis = DateTime.Now.AddDays(5), ReinaPresente = true, HayCrias = true },
-                new Revision { ColmenaId = colmenas[3].Id, Fecha = DateTime.Now.AddDays(-2), Tipo = "Extraccion", Observaciones = "Lista para extraer miel", ReinaPresente = true, HayCrias = true }
+                new Revision { ColmenaId = colmenas[0].Id, Fecha = DateTime.UtcNow.AddDays(-15), Tipo = TipoRevision.Rutinaria, Observaciones = "Todo en orden", ReinaPresente = true, HayCrias = true, PoblacionEstimada = NivelPoblacion.Fuerte, Temperamento = TipoTemperamento.Mansa },
+                new Revision { ColmenaId = colmenas[1].Id, Fecha = DateTime.UtcNow.AddDays(-10), Tipo = TipoRevision.Sanitaria, Observaciones = "Presencia de varroa", Sintomas = "Abejas deformes", Enfermedades = "Varroasis", Tratamiento = "Ácido oxálico", Dosis = "5ml", ProximaDosis = DateTime.UtcNow.AddDays(5), ReinaPresente = true, HayCrias = true },
+                new Revision { ColmenaId = colmenas[3].Id, Fecha = DateTime.UtcNow.AddDays(-2), Tipo = TipoRevision.Extraccion, Observaciones = "Lista para extraer miel", ReinaPresente = true, HayCrias = true }
             };
             context.Revisiones.AddRange(revisiones);
             context.SaveChanges();
 
             var extracciones = new Extraccion[]
             {
-                new Extraccion { ColmenaId = colmenas[0].Id, CantidadKg = 15.5, Fecha = DateTime.Now.AddDays(-30) },
-                new Extraccion { ColmenaId = colmenas[0].Id, CantidadKg = 12.0, Fecha = DateTime.Now.AddDays(-5) },
-                new Extraccion { ColmenaId = colmenas[3].Id, CantidadKg = 20.0, Fecha = DateTime.Now.AddDays(-1) }
+                new Extraccion { ColmenaId = colmenas[0].Id, CantidadKg = 15.5, Fecha = DateTime.UtcNow.AddDays(-30) },
+                new Extraccion { ColmenaId = colmenas[0].Id, CantidadKg = 12.0, Fecha = DateTime.UtcNow.AddDays(-5) },
+                new Extraccion { ColmenaId = colmenas[3].Id, CantidadKg = 20.0, Fecha = DateTime.UtcNow.AddDays(-1) }
             };
             context.Extracciones.AddRange(extracciones);
             context.SaveChanges();
 
             var tareas = new Tarea[]
             {
-                new Tarea { ApiarioId = apiarioNorteId, Titulo = "Limpieza de Apiario", Descripcion = "Cortar pasto y arreglar el alambrado del apiario.", FechaProgramada = DateTime.Now.AddDays(2), Completada = false },
-                new Tarea { ColmenaId = colmenas[1].Id, Titulo = "Aplicar tratamiento", Descripcion = "Aplicar segunda dosis de tratamiento contra varroa.", FechaProgramada = DateTime.Now.AddDays(5), Completada = false },
-                new Tarea { ApiarioId = apiarioSurId, Titulo = "Revisión general", Descripcion = "Revisar todas las colmenas antes de la trashumancia.", FechaProgramada = DateTime.Now.AddDays(-1), Completada = true }
+                new Tarea { ApiarioId = apiarioNorteId, Titulo = "Limpieza de Apiario", Descripcion = "Cortar pasto y arreglar el alambrado del apiario.", FechaProgramada = DateTime.UtcNow.AddDays(2), Completada = false },
+                new Tarea { ColmenaId = colmenas[1].Id, Titulo = "Aplicar tratamiento", Descripcion = "Aplicar segunda dosis de tratamiento contra varroa.", FechaProgramada = DateTime.UtcNow.AddDays(5), Completada = false },
+                new Tarea { ApiarioId = apiarioSurId, Titulo = "Revisión general", Descripcion = "Revisar todas las colmenas antes de la trashumancia.", FechaProgramada = DateTime.UtcNow.AddDays(-1), Completada = true }
             };
             context.Tareas.AddRange(tareas);
             context.SaveChanges();
 
             var trashumancias = new Trashumancia[]
             {
-                new Trashumancia { ApiarioOrigenId = apiarioSurId, ApiarioDestinoId = apiarios[2].Id, Fecha = DateTime.Now.AddDays(-60), DistanciaKm = 45.5 }
+                new Trashumancia { ApiarioOrigenId = apiarioSurId, ApiarioDestinoId = apiarios[2].Id, Fecha = DateTime.UtcNow.AddDays(-60), DistanciaKm = 45.5 }
             };
             context.Trashumancias.AddRange(trashumancias);
             context.SaveChanges();

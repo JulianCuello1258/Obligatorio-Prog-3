@@ -67,7 +67,7 @@ namespace BeeKeeperApp.Controllers
                 }
                 else
                 {
-                    colmena.Reina = new Reina { Presencia = true, Salud = "Buena" };
+                    colmena.Reina = new Reina { Presencia = true, Salud = SaludReina.Buena };
                 }
 
                 _context.Add(colmena);

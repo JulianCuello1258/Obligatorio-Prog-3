@@ -20,7 +20,7 @@ namespace BeeKeeperApp.Migrations
                     Nombre = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Latitud = table.Column<double>(type: "float", nullable: false),
                     Longitud = table.Column<double>(type: "float", nullable: false),
-                    Tipo = table.Column<int>(type: "int", nullable: false),
+                    Tipo = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     SeccionPolicial = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Zona = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     TrashumanciaHabilitada = table.Column<bool>(type: "bit", nullable: false),
@@ -33,13 +33,28 @@ namespace BeeKeeperApp.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Exportaciones",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CantidadBarriles = table.Column<int>(type: "int", nullable: false),
+                    Destino = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Fecha = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Exportaciones", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Colmenas",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ApiarioId = table.Column<int>(type: "int", nullable: false),
-                    Estado = table.Column<int>(type: "int", nullable: false),
+                    Estado = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Tipo = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Poblacion = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -92,7 +107,8 @@ namespace BeeKeeperApp.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ColmenaId = table.Column<int>(type: "int", nullable: false),
                     CantidadKg = table.Column<double>(type: "float", nullable: false),
-                    Fecha = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Fecha = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ExportacionId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -103,6 +119,11 @@ namespace BeeKeeperApp.Migrations
                         principalTable: "Colmenas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Extracciones_Exportaciones_ExportacionId",
+                        column: x => x.ExportacionId,
+                        principalTable: "Exportaciones",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -144,7 +165,11 @@ namespace BeeKeeperApp.Migrations
                     Temperamento = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ReinaPresente = table.Column<bool>(type: "bit", nullable: false),
                     ReinaSalud = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    HayCrias = table.Column<bool>(type: "bit", nullable: false)
+                    HayCrias = table.Column<bool>(type: "bit", nullable: false),
+                    Plagas = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    NivelInfestacion = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ResultadoTratamiento = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Enjambrazon = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -165,6 +190,7 @@ namespace BeeKeeperApp.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ApiarioId = table.Column<int>(type: "int", nullable: true),
                     ColmenaId = table.Column<int>(type: "int", nullable: true),
+                    Titulo = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FechaProgramada = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Completada = table.Column<bool>(type: "bit", nullable: false)
@@ -184,6 +210,28 @@ namespace BeeKeeperApp.Migrations
                         principalColumn: "Id");
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Clima",
+                columns: table => new
+                {
+                    RevisionId = table.Column<int>(type: "int", nullable: false),
+                    Temperatura = table.Column<double>(type: "float", nullable: true),
+                    Humedad = table.Column<double>(type: "float", nullable: true),
+                    Presion = table.Column<double>(type: "float", nullable: true),
+                    VelocidadViento = table.Column<double>(type: "float", nullable: true),
+                    DireccionViento = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Clima", x => x.RevisionId);
+                    table.ForeignKey(
+                        name: "FK_Clima_Revisiones_RevisionId",
+                        column: x => x.RevisionId,
+                        principalTable: "Revisiones",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Colmenas_ApiarioId",
                 table: "Colmenas",
@@ -193,6 +241,11 @@ namespace BeeKeeperApp.Migrations
                 name: "IX_Extracciones_ColmenaId",
                 table: "Extracciones",
                 column: "ColmenaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Extracciones_ExportacionId",
+                table: "Extracciones",
+                column: "ExportacionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Revisiones_ColmenaId",
@@ -224,19 +277,25 @@ namespace BeeKeeperApp.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "Clima");
+
+            migrationBuilder.DropTable(
                 name: "Extracciones");
 
             migrationBuilder.DropTable(
                 name: "Reinas");
 
             migrationBuilder.DropTable(
-                name: "Revisiones");
-
-            migrationBuilder.DropTable(
                 name: "Tareas");
 
             migrationBuilder.DropTable(
                 name: "Trashumancias");
+
+            migrationBuilder.DropTable(
+                name: "Revisiones");
+
+            migrationBuilder.DropTable(
+                name: "Exportaciones");
 
             migrationBuilder.DropTable(
                 name: "Colmenas");
