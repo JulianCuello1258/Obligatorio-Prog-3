@@ -40,6 +40,9 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Contenedor para previsualización de clima -->
+                <div id="clima-contenedor" class="mb-3"></div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label asp-for="Departamento" class="form-label">Departamento</label>
@@ -104,10 +107,26 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/js/apiario-clima.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var map = null;
             var marker = null;
+
+            function actualizarClimaDesdeInputs() {
+                var lat = document.getElementById('latInput').value;
+                var lng = document.getElementById('lngInput').value;
+                consultarClima(lat, lng, 'clima-contenedor');
+            }
+
+            // Escuchar cambios en los inputs de coordenadas
+            document.getElementById('latInput').addEventListener('change', actualizarClimaDesdeInputs);
+            document.getElementById('lngInput').addEventListener('change', actualizarClimaDesdeInputs);
+
+            // Cargar el clima automáticamente al iniciar la página usando las coordenadas del apiario guardado
+            if (document.getElementById('latInput').value && document.getElementById('lngInput').value) {
+                actualizarClimaDesdeInputs();
+            }
             
             var mapModal = document.getElementById('mapModal');
             document.body.appendChild(mapModal); // Move modal to body to avoid backdrop stacking issues
@@ -134,6 +153,8 @@
                         // Use string conversion with dot as decimal separator
                         document.getElementById('latInput').value = e.latlng.lat.toFixed(6).replace(',', '.');
                         document.getElementById('lngInput').value = e.latlng.lng.toFixed(6).replace(',', '.');
+                        
+                        actualizarClimaDesdeInputs();
                     });
                 } else {
                     map.invalidateSize();

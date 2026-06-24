@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using BeeKeeperApp.Data;
 using BeeKeeperApp.Filters;
+using BeeKeeperApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,8 @@ builder.Services.AddControllersWithViews(options => {
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHttpClient<WeatherService>();
 
 builder.Services.AddSession(options => {
     options.IdleTimeout = TimeSpan.FromHours(24);

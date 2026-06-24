@@ -2,16 +2,30 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BeeKeeperApp.Data;
 using BeeKeeperApp.Models.Entities;
+using BeeKeeperApp.Services;
 
 namespace BeeKeeperApp.Controllers
 {
     public class ApiariosController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly WeatherService _weatherService;
 
-        public ApiariosController(ApplicationDbContext context)
+        public ApiariosController(ApplicationDbContext context, WeatherService weatherService)
         {
             _context = context;
+            _weatherService = weatherService;
+        }
+
+        [HttpGet("Apiario/Clima")]
+        public async Task<IActionResult> Clima(double lat, double lon)
+        {
+            var suitability = await _weatherService.GetBeeWeatherSuitabilityAsync(lat, lon);
+            if (suitability == null)
+            {
+                return BadRequest(new { message = "No se pudieron obtener los datos climáticos para las coordenadas especificadas." });
+            }
+            return Json(suitability);
         }
 
         // GET: Apiarios

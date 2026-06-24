@@ -454,3 +454,4 @@ C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\refint\BeeKeeper
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\BeeKeeperApp.pdb
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\BeeKeeperApp.genruntimeconfig.cache
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\ref\BeeKeeperApp.dll
+C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\3p024mz72f-{0}-8qvtslz18x-8qvtslz18x.gz
