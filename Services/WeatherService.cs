@@ -6,239 +6,782 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.EntityFrameworkCore;
+using BeeKeeperApp.Data;
+using BeeKeeperApp.Models.Entities;
 
 namespace BeeKeeperApp.Services
 {
     public class WeatherService
     {
         private readonly HttpClient _httpClient;
+        private readonly ApplicationDbContext _context;
+        private readonly IMemoryCache _cache;
 
-        public WeatherService(HttpClient httpClient)
+        public WeatherService(HttpClient httpClient, ApplicationDbContext context, IMemoryCache cache)
         {
             _httpClient = httpClient;
+            _context = context;
+            _cache = cache;
         }
 
         public async Task<ClimaAptitudDto?> GetBeeWeatherSuitabilityAsync(double latitude, double longitude)
         {
             try
             {
-                // Requesting standard parameters + GMT timezone to align times in UTC.
-                var url = $"https://api.open-meteo.com/v1/forecast?latitude={latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}&longitude={longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation,shortwave_radiation,soil_temperature_0cm&timezone=GMT";
+                // Run all data source queries in parallel for peak performance
+                var forecastTask = GetCurrentForecastAsync(latitude, longitude);
+                var archiveTask = GetHistoricalWeatherCachedAsync(latitude, longitude);
+                var osmTask = GetOverpassSurroundingsCachedAsync(latitude, longitude);
+                var dbTask = GetNearbyApiariesAsync(latitude, longitude);
 
-                var response = await _httpClient.GetFromJsonAsync<OpenMeteoResponse>(url);
-                if (response == null || response.Hourly == null || response.Hourly.Time == null)
+                await Task.WhenAll(forecastTask, archiveTask, osmTask, dbTask);
+
+                var forecast = await forecastTask;
+                if (forecast == null)
                 {
                     return null;
                 }
 
-                // Find index corresponding to current hour in UTC.
-                var nowUtc = DateTime.UtcNow;
-                int selectedIndex = 0;
-                double minDiffSeconds = double.MaxValue;
+                var archive = await archiveTask;
+                var osm = await osmTask;
+                var nearbyApiaries = await dbTask;
 
-                for (int i = 0; i < response.Hourly.Time.Count; i++)
-                {
-                    if (DateTime.TryParse(response.Hourly.Time[i], out var itemTime))
-                    {
-                        var itemTimeUtc = DateTime.SpecifyKind(itemTime, DateTimeKind.Utc);
-                        var diff = Math.Abs((itemTimeUtc - nowUtc).TotalSeconds);
-                        if (diff < minDiffSeconds)
-                        {
-                            minDiffSeconds = diff;
-                            selectedIndex = i;
-                        }
-                    }
-                }
-
-                // Ensure index is within range of all lists
-                var h = response.Hourly;
-                if (selectedIndex >= h.Time.Count ||
-                    selectedIndex >= h.Temperature2m.Count ||
-                    selectedIndex >= h.RelativeHumidity2m.Count ||
-                    selectedIndex >= h.WindSpeed10m.Count ||
-                    selectedIndex >= h.WindDirection10m.Count ||
-                    selectedIndex >= h.Precipitation.Count ||
-                    selectedIndex >= h.ShortwaveRadiation.Count ||
-                    selectedIndex >= h.SoilTemperature0cm.Count)
-                {
-                    return null;
-                }
-
-                double temp = h.Temperature2m[selectedIndex];
-                double humidity = h.RelativeHumidity2m[selectedIndex];
-                double windSpeed = h.WindSpeed10m[selectedIndex];
-                double windDirection = h.WindDirection10m[selectedIndex];
-                double precipitation = h.Precipitation[selectedIndex];
-                double radiation = h.ShortwaveRadiation[selectedIndex];
-                double soilTemp = h.SoilTemperature0cm[selectedIndex];
-
-                return EvaluateSuitability(temp, humidity, windSpeed, windDirection, precipitation, radiation, soilTemp);
+                // Evaluate the component scores
+                var dto = ProcessSuitability(latitude, longitude, forecast, archive, osm, nearbyApiaries);
+                return dto;
             }
             catch (Exception)
             {
-                // In case of any API or network issue, return null so caller can handle gracefully.
                 return null;
             }
         }
 
-        private ClimaAptitudDto EvaluateSuitability(double temp, double hum, double windSpd, double windDir, double prec, double rad, double soilTemp)
+        private async Task<OpenMeteoResponse?> GetCurrentForecastAsync(double latitude, double longitude)
+        {
+            try
+            {
+                var url = $"https://api.open-meteo.com/v1/forecast?latitude={latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}&longitude={longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation,shortwave_radiation,soil_temperature_0cm&timezone=GMT";
+                return await _httpClient.GetFromJsonAsync<OpenMeteoResponse>(url);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        private async Task<OpenMeteoArchiveResponse?> GetHistoricalWeatherCachedAsync(double latitude, double longitude)
+        {
+            double cachedLat = Math.Round(latitude, 3);
+            double cachedLon = Math.Round(longitude, 3);
+            string cacheKey = $"hist_weather_{cachedLat.ToString(System.Globalization.CultureInfo.InvariantCulture)}_{cachedLon.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+
+            if (!_cache.TryGetValue(cacheKey, out OpenMeteoArchiveResponse? result))
+            {
+                result = await GetHistoricalWeatherAsync(latitude, longitude);
+                if (result != null)
+                {
+                    var cacheEntryOptions = new MemoryCacheEntryOptions()
+                        .SetAbsoluteExpiration(TimeSpan.FromHours(24));
+                    _cache.Set(cacheKey, result, cacheEntryOptions);
+                }
+            }
+            return result;
+        }
+
+        private async Task<OpenMeteoArchiveResponse?> GetHistoricalWeatherAsync(double latitude, double longitude)
+        {
+            try
+            {
+                // Offset of 10 days to guarantee data validation in the Archive API (ERA5/Radiation)
+                var endDate = DateTime.UtcNow.AddDays(-10).ToString("yyyy-MM-dd");
+                var startDate = DateTime.UtcNow.AddDays(-190).ToString("yyyy-MM-dd");
+
+                var url = $"https://archive-api.open-meteo.com/v1/archive?latitude={latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}&longitude={longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}&start_date={startDate}&end_date={endDate}&daily=precipitation_sum,relative_humidity_2m_mean,temperature_2m_mean,wind_speed_10m_max&timezone=GMT";
+
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("User-Agent", "BeeKeeperApp/1.0");
+
+                var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<OpenMeteoArchiveResponse>();
+                }
+            }
+            catch (Exception)
+            {
+                // Silent catch: falls back gracefully with null
+            }
+            return null;
+        }
+
+        private async Task<OverpassResponse?> GetOverpassSurroundingsCachedAsync(double latitude, double longitude)
+        {
+            double cachedLat = Math.Round(latitude, 3);
+            double cachedLon = Math.Round(longitude, 3);
+            string cacheKey = $"osm_surroundings_{cachedLat.ToString(System.Globalization.CultureInfo.InvariantCulture)}_{cachedLon.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+
+            if (!_cache.TryGetValue(cacheKey, out OverpassResponse? result))
+            {
+                result = await GetOverpassSurroundingsAsync(latitude, longitude);
+                if (result != null)
+                {
+                    var cacheEntryOptions = new MemoryCacheEntryOptions()
+                        .SetAbsoluteExpiration(TimeSpan.FromHours(24));
+                    _cache.Set(cacheKey, result, cacheEntryOptions);
+                }
+            }
+            return result;
+        }
+
+        private async Task<OverpassResponse?> GetOverpassSurroundingsAsync(double latitude, double longitude)
+        {
+            try
+            {
+                var query = $@"
+[out:json][timeout:15];
+(
+  node(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""natural""=""water""];
+  way(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""natural""=""water""];
+  relation(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""natural""=""water""];
+  node(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""waterway""];
+  way(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""waterway""];
+  relation(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""waterway""];
+  node(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""landuse""=""farmland""];
+  way(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""landuse""=""farmland""];
+  relation(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""landuse""=""farmland""];
+  node(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""landuse""=""orchard""];
+  way(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""landuse""=""orchard""];
+  relation(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""landuse""=""orchard""];
+  node(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""landuse""=""vineyard""];
+  way(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""landuse""=""vineyard""];
+  relation(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""landuse""=""vineyard""];
+  node(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""crop""];
+  way(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""crop""];
+  relation(around:3000, {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)})[""crop""];
+);
+out tags center;
+";
+                var content = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("data", query)
+                });
+
+                var request = new HttpRequestMessage(HttpMethod.Post, "https://overpass-api.de/api/interpreter")
+                {
+                    Content = content
+                };
+                request.Headers.Add("User-Agent", "BeeKeeperApp/1.0 (contact: support@beekeeperapp.com)");
+
+                var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<OverpassResponse>();
+                }
+            }
+            catch (Exception)
+            {
+                // Silent catch to fallback gracefully
+            }
+            return null;
+        }
+
+        private async Task<List<NearbyApiaryDto>> GetNearbyApiariesAsync(double latitude, double longitude)
+        {
+            var nearby = new List<NearbyApiaryDto>();
+            try
+            {
+                var apiarios = await _context.Apiarios.ToListAsync();
+                foreach (var apiario in apiarios)
+                {
+                    double dist = CalculateDistance(latitude, longitude, apiario.Latitud, apiario.Longitud);
+                    if (dist <= 3000) // Within 3km foraging radius
+                    {
+                        nearby.Add(new NearbyApiaryDto
+                        {
+                            Nombre = apiario.Nombre,
+                            Latitud = apiario.Latitud,
+                            Longitud = apiario.Longitud,
+                            DistanciaMetros = dist
+                        });
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Silent catch
+            }
+            return nearby.OrderBy(a => a.DistanciaMetros).ToList();
+        }
+
+        private ClimaAptitudDto ProcessSuitability(
+            double latitude,
+            double longitude,
+            OpenMeteoResponse forecast,
+            OpenMeteoArchiveResponse? archive,
+            OverpassResponse? osm,
+            List<NearbyApiaryDto> nearbyApiaries)
+        {
+            // Find current forecast metrics
+            var nowUtc = DateTime.UtcNow;
+            int selectedIndex = 0;
+            double minDiffSeconds = double.MaxValue;
+
+            for (int i = 0; i < forecast.Hourly.Time.Count; i++)
+            {
+                if (DateTime.TryParse(forecast.Hourly.Time[i], out var itemTime))
+                {
+                    var itemTimeUtc = DateTime.SpecifyKind(itemTime, DateTimeKind.Utc);
+                    var diff = Math.Abs((itemTimeUtc - nowUtc).TotalSeconds);
+                    if (diff < minDiffSeconds)
+                    {
+                        minDiffSeconds = diff;
+                        selectedIndex = i;
+                    }
+                }
+            }
+
+            var h = forecast.Hourly;
+            double temp = h.Temperature2m[selectedIndex];
+            double humidity = h.RelativeHumidity2m[selectedIndex];
+            double windSpeed = h.WindSpeed10m[selectedIndex];
+            double windDirection = h.WindDirection10m[selectedIndex];
+            double precipitation = h.Precipitation[selectedIndex];
+            double radiation = h.ShortwaveRadiation[selectedIndex];
+            double soilTemp = h.SoilTemperature0cm[selectedIndex];
+
+            // 1. Current Weather Suitability Sub-score (45 pts base weight)
+            int currentScore = EvaluateCurrentWeather(temp, humidity, windSpeed, precipitation, radiation, soilTemp, out var currentReasonsSi, out var currentReasonsNo);
+
+            var dto = new ClimaAptitudDto
+            {
+                Temperatura = temp,
+                Humedad = humidity,
+                VelocidadViento = windSpeed,
+                DireccionViento = windDirection,
+                DireccionVientoCard = GetWindDirectionCard(windDirection),
+                Precipitacion = precipitation,
+                Radiacion = radiation,
+                TemperaturaSuelo = soilTemp,
+                RazonesSi = currentReasonsSi,
+                RazonesNo = currentReasonsNo
+            };
+
+            // 2. Historical Weather Analysis (25 pts base weight)
+            int historicalScore = 100;
+            if (archive != null && archive.Daily != null && archive.Daily.Time.Count > 0)
+            {
+                dto.TieneDatosHistoricos = true;
+                var daily = archive.Daily;
+
+                var validRain = daily.PrecipitationSum.Where(p => p.HasValue).Select(p => p!.Value).ToList();
+                dto.LluviaAcumulada180Dias = validRain.Sum();
+                dto.LluviaPromedioDiaria180Dias = validRain.Count > 0 ? dto.LluviaAcumulada180Dias / validRain.Count : 0;
+
+                var validHum = daily.RelativeHumidity2mMean.Where(h2 => h2.HasValue).Select(h2 => h2!.Value).ToList();
+                dto.DiasHumedadAlta180Dias = validHum.Count(humVal => humVal > 80);
+
+                var validWind = daily.WindSpeed10mMax.Where(w => w.HasValue).Select(w => w!.Value).ToList();
+                dto.DiasVientoFuerte180Dias = validWind.Count(wVal => wVal > 24);
+                dto.PorcentajeDiasVientoFuerte = validWind.Count > 0 ? (double)dto.DiasVientoFuerte180Dias / validWind.Count * 100 : 0;
+
+                var validTemp = daily.Temperature2mMean.Where(t2 => t2.HasValue).Select(t2 => t2!.Value).ToList();
+                dto.DiasHeladas180Dias = validTemp.Count(tVal => tVal < 5);
+
+                // Calculations and deductions for historical data
+                if (dto.PorcentajeDiasVientoFuerte > 50)
+                {
+                    historicalScore -= 30;
+                    dto.RazonesNo.Add($"Vientos fuertes frecuentes ({Math.Round(dto.PorcentajeDiasVientoFuerte)}% de los días en los últimos 180 días), lo que reduce la viabilidad de pecoreo continuo.");
+                }
+                else if (dto.PorcentajeDiasVientoFuerte > 30)
+                {
+                    historicalScore -= 15;
+                    dto.RazonesNo.Add($"Vientos fuertes moderadamente frecuentes ({Math.Round(dto.PorcentajeDiasVientoFuerte)}% de los días en los últimos 180 días).");
+                }
+                else if (dto.PorcentajeDiasVientoFuerte <= 15)
+                {
+                    dto.RazonesSi.Add("Baja frecuencia de vientos fuertes en los últimos 180 días, ideal para vuelos sin interrupciones.");
+                }
+
+                if (dto.DiasHumedadAlta180Dias > 50)
+                {
+                    historicalScore -= 20;
+                    dto.RazonesNo.Add($"Humedad media elevada recurrente ({dto.DiasHumedadAlta180Dias} de 180 días con HR > 80%).");
+                }
+                else if (dto.DiasHumedadAlta180Dias > 30)
+                {
+                    historicalScore -= 10;
+                }
+
+                // Sanitay Warning: Nosema disease risk (empirical/estimated threshold subject to validation)
+                if (dto.DiasHumedadAlta180Dias > 36)
+                {
+                    dto.AlertaSanitaria = $"Humedad superior al 80% en {dto.DiasHumedadAlta180Dias} de los últimos 180 días. Esto puede favorecer la aparición de Nosema apis/ceranae (umbral de riesgo estimado por el equipo, sujeto a validación bibliográfica).";
+                }
+
+                if (dto.DiasHeladas180Dias > 25)
+                {
+                    historicalScore -= 15;
+                    dto.RazonesNo.Add($"Presencia recurrente de temperaturas invernales extremas o heladas ({dto.DiasHeladas180Dias} días con media < 5°C), aumentando riesgo de enfriamiento de la cría.");
+                }
+
+                if (dto.LluviaPromedioDiaria180Dias < 0.5)
+                {
+                    historicalScore -= 15;
+                    dto.RazonesNo.Add("Bajo nivel de lluvias acumuladas (posible sequía), lo que reduce la producción de néctar en la flora.");
+                }
+            }
+            else
+            {
+                dto.TieneDatosHistoricos = false;
+                historicalScore = 100; // neutral fallback
+            }
+
+            // 3. Geographic Surroundings Analysis (30% weight)
+            int geoScore = 100;
+            bool hasFallbackUsed = false;
+
+            // 3a. Process local apiary competition
+            dto.ApiariosCercanosCount = nearbyApiaries.Count;
+            if (nearbyApiaries.Count > 0)
+            {
+                dto.DistanciaApiarioMasCercano = nearbyApiaries.Min(a => a.DistanciaMetros);
+                if (nearbyApiaries.Count >= 3)
+                {
+                    geoScore -= 35;
+                    dto.RazonesNo.Add($"Alta competencia por pecoreo: {nearbyApiaries.Count} apiarios registrados en un radio de 3km (el más cercano a {Math.Round(dto.DistanciaApiarioMasCercano.Value)}m).");
+                }
+                else
+                {
+                    geoScore -= (nearbyApiaries.Count == 1) ? 10 : 20;
+                    dto.RazonesNo.Add($"Competencia de pecoreo: {nearbyApiaries.Count} apiario(s) registrado(s) en 3km (el más cercano a {Math.Round(dto.DistanciaApiarioMasCercano.Value)}m).");
+                }
+            }
+            else
+            {
+                dto.RazonesSi.Add("Sin competencia: no hay otros apiarios registrados en el radio de pecoreo de 3km.");
+            }
+
+            // 3b. Process OSM or Fallback for water and crops
+            ProcessGeographics(latitude, longitude, osm, dto, ref geoScore, ref hasFallbackUsed);
+
+            // 4. Calculate Final Composite Score and Aptitud Level
+            bool hasGeographicData = IsInUruguay(latitude, longitude) || (osm != null && osm.Elements.Count > 0);
+
+            double finalScore;
+            if (hasGeographicData)
+            {
+                // Weighted: 45% current weather + 25% historical weather + 30% surroundings geography
+                finalScore = (currentScore * 0.45) + (Math.Clamp(historicalScore, 0, 100) * 0.25) + (Math.Clamp(geoScore, 0, 100) * 0.30);
+            }
+            else
+            {
+                // Outside coverage area & no OSM: scale to weather only (65% current + 35% historical)
+                finalScore = (currentScore * 0.65) + (Math.Clamp(historicalScore, 0, 100) * 0.35);
+                dto.CultivosOrigen = "No detectado";
+                dto.AguaOrigen = "No detectado";
+                dto.RazonesNo.Add("Ubicación fuera de cobertura regional para estimaciones agrícolas. Evaluación basada únicamente en clima.");
+            }
+
+            int scoreInt = (int)Math.Clamp(Math.Round(finalScore), 0, 100);
+            dto.Puntaje = scoreInt;
+
+            if (scoreInt >= 75)
+            {
+                dto.Aptitud = "Óptimo";
+                dto.Color = "success";
+            }
+            else if (scoreInt >= 50)
+            {
+                dto.Aptitud = "Aceptable";
+                dto.Color = "warning";
+            }
+            else
+            {
+                dto.Aptitud = "No recomendado";
+                dto.Color = "danger";
+            }
+
+            // Fallback for details list if empty
+            if (dto.RazonesSi.Count == 0 && dto.RazonesNo.Count == 0)
+            {
+                dto.Detalles.Add("Condiciones generales aceptables para la instalación.");
+            }
+            else
+            {
+                // Sync with original Detalles list to support any old UI bindings
+                dto.Detalles.AddRange(dto.RazonesSi.Select(r => $"✅ {r}"));
+                dto.Detalles.AddRange(dto.RazonesNo.Select(r => $"⚠️ {r}"));
+            }
+
+            return dto;
+        }
+
+        private int EvaluateCurrentWeather(double temp, double hum, double windSpd, double prec, double rad, double soilTemp, out List<string> reasonsSi, out List<string> reasonsNo)
         {
             int score = 100;
-            var details = new List<string>();
+            reasonsSi = new List<string>();
+            reasonsNo = new List<string>();
 
-            // 1. Precipitation (mm/h)
+            // Precipitation
             if (prec >= 5.0)
             {
                 score = 0;
-                details.Add("Lluvia fuerte o tormenta (vuelo imposible)");
+                reasonsNo.Add("Lluvia fuerte o tormenta actual (vuelo de abejas imposible).");
             }
             else if (prec > 0)
             {
-                int deduction = (int)(prec * 20);
-                score -= deduction;
-                details.Add($"Lluvia débil/moderada ({prec} mm/h)");
+                score -= (int)(prec * 20);
+                reasonsNo.Add($"Lluvia débil/moderada actual ({prec} mm/h).");
             }
 
             if (score > 0)
             {
-                // 2. Temperature (optimal: 20-30°C)
-                if (temp < 10 || temp > 38)
+                // Temperature
+                if (temp >= 20 && temp <= 30)
+                {
+                    reasonsSi.Add($"Temperatura actual óptima para el pecoreo ({temp}°C).");
+                }
+                else if (temp < 10 || temp > 38)
                 {
                     score -= 80;
-                    details.Add(temp < 10 ? $"Temperatura extremadamente baja ({temp}°C)" : $"Temperatura extremadamente alta ({temp}°C)");
+                    reasonsNo.Add(temp < 10 ? $"Temperatura extremadamente baja ({temp}°C)." : $"Temperatura extremadamente alta ({temp}°C).");
                 }
                 else if (temp >= 10 && temp < 14)
                 {
                     score -= (int)((14 - temp) * 15);
-                    details.Add($"Temperatura fría para el pecoreo ({temp}°C)");
+                    reasonsNo.Add($"Temperatura fría para el pecoreo ({temp}°C).");
                 }
                 else if (temp >= 14 && temp < 20)
                 {
                     score -= (int)((20 - temp) * 5);
-                    details.Add($"Temperatura fresca ({temp}°C)");
+                    reasonsNo.Add($"Temperatura templada/fresca ({temp}°C).");
                 }
                 else if (temp > 30 && temp <= 35)
                 {
                     score -= (int)((temp - 30) * 8);
-                    details.Add($"Temperatura calurosa ({temp}°C)");
+                    reasonsNo.Add($"Temperatura calurosa ({temp}°C).");
                 }
                 else if (temp > 35 && temp <= 38)
                 {
                     score -= (int)((temp - 35) * 20);
-                    details.Add($"Temperatura muy alta ({temp}°C)");
+                    reasonsNo.Add($"Temperatura muy alta ({temp}°C).");
                 }
 
-                // 3. Wind Speed (optimal: < 15 km/h, max: 32 km/h)
-                if (windSpd >= 32)
+                // Wind
+                if (windSpd < 15)
+                {
+                    reasonsSi.Add($"Vientos actuales suaves ({windSpd} km/h), condiciones excelentes de vuelo.");
+                }
+                else if (windSpd >= 32)
                 {
                     score -= 80;
-                    details.Add($"Viento fuerte perjudicial ({windSpd} km/h)");
+                    reasonsNo.Add($"Viento fuerte perjudicial ({windSpd} km/h) — riesgo de desorientación y pérdida de abejas.");
                 }
                 else if (windSpd >= 24 && windSpd < 32)
                 {
                     score -= (int)((windSpd - 24) * 5 + 27);
-                    details.Add($"Viento moderado/fuerte ({windSpd} km/h)");
+                    reasonsNo.Add($"Viento moderado/fuerte ({windSpd} km/h).");
                 }
                 else if (windSpd >= 15 && windSpd < 24)
                 {
                     score -= (int)((windSpd - 15) * 3);
-                    details.Add($"Viento moderado ({windSpd} km/h)");
+                    reasonsNo.Add($"Viento moderado ({windSpd} km/h).");
                 }
 
-                // 4. Humidity (optimal: 50-80%)
-                if (hum < 50)
+                // Humidity
+                if (hum >= 50 && hum <= 80)
+                {
+                    reasonsSi.Add($"Humedad relativa óptima ({hum}%).");
+                }
+                else if (hum < 50)
                 {
                     score -= (int)((50 - hum) * 0.5);
-                    details.Add($"Humedad relativa baja ({hum}%)");
+                    reasonsNo.Add($"Humedad relativa actual baja ({hum}%).");
                 }
                 else if (hum > 80)
                 {
                     score -= (int)((hum - 80) * 1.5);
-                    details.Add($"Humedad relativa alta ({hum}%)");
+                    reasonsNo.Add($"Humedad relativa actual alta ({hum}%).");
                 }
 
-                // 5. Shortwave Radiation (optimal: > 200 W/m²)
-                if (rad == 0)
+                // Radiation
+                if (rad >= 200)
+                {
+                    reasonsSi.Add("Buena radiación solar actual, estimula la salida de pecoreadoras.");
+                }
+                else if (rad == 0)
                 {
                     score -= 60;
-                    details.Add("Sin radiación solar (noche)");
+                    reasonsNo.Add("Sin radiación solar (noche).");
                 }
                 else if (rad < 50)
                 {
                     score -= 30;
-                    details.Add($"Radiación solar muy baja / nublado ({rad} W/m²)");
+                    reasonsNo.Add($"Radiación solar muy baja / cielo muy nublado ({rad} W/m²).");
                 }
                 else if (rad >= 50 && rad < 200)
                 {
                     score -= (int)((200 - rad) * 0.15);
-                    details.Add($"Radiación solar moderada / semisombra ({rad} W/m²)");
+                    reasonsNo.Add($"Radiación solar moderada / semisombra ({rad} W/m²).");
                 }
 
-                // 6. Soil Temperature (optimal: 15-30°C)
+                // Soil temp
                 if (soilTemp < 10 || soilTemp > 35)
                 {
                     score -= 15;
-                    details.Add($"Temperatura de suelo desfavorable ({soilTemp}°C)");
                 }
                 else if (soilTemp >= 10 && soilTemp < 15)
                 {
                     score -= (int)((15 - soilTemp) * 2);
-                    details.Add($"Temperatura de suelo fría ({soilTemp}°C)");
                 }
                 else if (soilTemp > 30 && soilTemp <= 35)
                 {
                     score -= (int)((soilTemp - 30) * 2);
-                    details.Add($"Temperatura de suelo alta ({soilTemp}°C)");
                 }
             }
 
-            score = Math.Clamp(score, 0, 100);
+            return Math.Clamp(score, 0, 100);
+        }
 
-            string aptitud;
-            string color;
+        private void ProcessGeographics(
+            double latitude,
+            double longitude,
+            OverpassResponse? osm,
+            ClimaAptitudDto dto,
+            ref int geoScore,
+            ref bool hasFallbackUsed)
+        {
+            double minWaterDist = double.MaxValue;
+            var osmCrops = new HashSet<string>();
+            bool osmWaterFound = false;
 
-            if (score >= 80)
+            if (osm != null && osm.Elements != null && osm.Elements.Count > 0)
             {
-                aptitud = "Óptimo";
-                color = "success";
+                foreach (var el in osm.Elements)
+                {
+                    double? elLat = el.Lat ?? el.Center?.Lat;
+                    double? elLon = el.Lon ?? el.Center?.Lon;
+
+                    if (elLat.HasValue && elLon.HasValue)
+                    {
+                        double dist = CalculateDistance(latitude, longitude, elLat.Value, elLon.Value);
+
+                        // Check water sources
+                        bool isWater = el.Tags.ContainsKey("natural") && el.Tags["natural"] == "water";
+                        bool isWaterway = el.Tags.ContainsKey("waterway");
+                        if (isWater || isWaterway)
+                        {
+                            osmWaterFound = true;
+                            if (dist < minWaterDist)
+                            {
+                                minWaterDist = dist;
+                            }
+                        }
+
+                        // Check crops
+                        if (el.Tags.ContainsKey("crop"))
+                        {
+                            var cropName = TranslateCrop(el.Tags["crop"]);
+                            osmCrops.Add(cropName);
+                        }
+                        else if (el.Tags.ContainsKey("landuse"))
+                        {
+                            var landuse = el.Tags["landuse"];
+                            if (landuse == "farmland") osmCrops.Add("Cultivo agrícola general");
+                            else if (landuse == "orchard") osmCrops.Add("Frutales");
+                            else if (landuse == "vineyard") osmCrops.Add("Viñedo");
+                            else if (landuse == "meadow") osmCrops.Add("Pasturas");
+                        }
+                    }
+                }
             }
-            else if (score >= 50)
+
+            // 1. Water Evaluation (OSM vs Fallback)
+            if (osmWaterFound && minWaterDist <= 3000)
             {
-                aptitud = "Aceptable";
-                color = "warning";
+                dto.TieneAguaCercana = true;
+                dto.DistanciaAguaMasCercana = minWaterDist;
+                dto.AguaOrigen = "OSM";
+                dto.FuentesAguaDetalle = $"Fuente de agua detectada vía satélite/OSM a {Math.Round(minWaterDist)}m de la ubicación.";
+
+                if (minWaterDist < 1000)
+                {
+                    dto.RazonesSi.Add($"Cercanía excelente a fuente de agua dulce natural ({Math.Round(minWaterDist)}m).");
+                }
+                else
+                {
+                    dto.RazonesSi.Add($"Acceso a fuente de agua dulce a {Math.Round(minWaterDist)}m (rango óptimo de pecoreo).");
+                }
             }
             else
             {
-                aptitud = "No recomendado";
-                color = "danger";
+                // Trigger Fallback for water
+                var fallback = GetFallbackSurroundings(latitude, longitude);
+                if (fallback != null)
+                {
+                    dto.TieneAguaCercana = fallback.TieneAguaCercana;
+                    dto.DistanciaAguaMasCercana = fallback.DistanciaAguaMasCercana;
+                    dto.AguaOrigen = "Estimado";
+                    dto.FuentesAguaDetalle = fallback.FuentesAguaDetalle;
+                    dto.RazonesSi.Add($"Disponibilidad de agua estimada regionalmente para la zona.");
+                }
+                else
+                {
+                    dto.TieneAguaCercana = false;
+                    dto.AguaOrigen = "No detectado";
+                    dto.FuentesAguaDetalle = "No se detectaron fuentes de agua dulce en un radio de 3km.";
+                    geoScore -= 20;
+                    dto.RazonesNo.Add("Sin fuentes de agua detectadas a menos de 3km. Será necesario colocar bebederos artificiales en el apiario.");
+                }
             }
 
-            if (details.Count == 0)
+            // 2. Crop Evaluation (OSM vs Fallback)
+            if (osmCrops.Count > 0)
             {
-                details.Add("Condiciones climáticas excelentes para el apiario.");
+                dto.CultivosDetectados = osmCrops.ToList();
+                dto.CultivosOrigen = "OSM";
+                dto.CultivosDetalle = $"Cultivos detectados satelitalmente (OSM) a menos de 3km: {string.Join(", ", dto.CultivosDetectados)}.";
+                dto.RazonesSi.Add($"Presencia comprobada de flora melífera/agrícola favorable: {string.Join(", ", dto.CultivosDetectados)}.");
             }
-
-            return new ClimaAptitudDto
+            else
             {
-                Temperatura = temp,
-                Humedad = hum,
-                VelocidadViento = windSpd,
-                DireccionViento = windDir,
-                DireccionVientoCard = GetWindDirectionCard(windDir),
-                Precipitacion = prec,
-                Radiacion = rad,
-                TemperaturaSuelo = soilTemp,
-                Puntaje = score,
-                Aptitud = aptitud,
-                Color = color,
-                Detalles = details
+                // Trigger Fallback for crops
+                var fallback = GetFallbackSurroundings(latitude, longitude);
+                if (fallback != null && fallback.CultivosDetectados.Count > 0)
+                {
+                    dto.CultivosDetectados = fallback.CultivosDetectados;
+                    dto.CultivosOrigen = "Estimado";
+                    dto.CultivosDetalle = fallback.CultivosDetalle;
+                    dto.RazonesSi.Add($"Cultivos potenciales en la zona (estimación regional): {string.Join(", ", dto.CultivosDetectados)}.");
+                }
+                else
+                {
+                    dto.CultivosOrigen = "No detectado";
+                    dto.CultivosDetalle = "No se identificaron zonas de cultivos en las bases cartográficas.";
+                    geoScore -= 15;
+                    dto.RazonesNo.Add("Escasa vegetación de cultivo melífero mapeada a menos de 3km. Verifique flora nativa o silvestre local en terreno.");
+                }
+            }
+        }
+
+        private string TranslateCrop(string englishCrop)
+        {
+            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "soy", "Soja" },
+                { "soybean", "Soja" },
+                { "sunflower", "Girasol" },
+                { "citrus", "Cítricos" },
+                { "orange", "Cítricos (Naranjo)" },
+                { "lemon", "Cítricos (Limonero)" },
+                { "corn", "Maíz" },
+                { "maize", "Maíz" },
+                { "wheat", "Trigo" },
+                { "barley", "Cebada" },
+                { "rice", "Arroz" },
+                { "pasture", "Pasturas" },
+                { "grass", "Praderas" },
+                { "alfalfa", "Alfalfa" },
+                { "clover", "Trébol" },
+                { "eucalyptus", "Eucalipto" },
+                { "forest", "Área Forestal" },
+                { "vineyard", "Viñedo" },
+                { "orchard", "Frutales" }
             };
+
+            return dict.TryGetValue(englishCrop, out var value) ? value : englishCrop;
+        }
+
+        private ClimaAptitudDto? GetFallbackSurroundings(double lat, double lon)
+        {
+            if (!IsInUruguay(lat, lon))
+            {
+                // Outside Uruguay
+                return null;
+            }
+
+            var dto = new ClimaAptitudDto
+            {
+                TieneAguaCercana = true,
+                DistanciaAguaMasCercana = 1500, // acceptable baseline
+                AguaOrigen = "Estimado",
+                CultivosOrigen = "Estimado"
+            };
+
+            // Estimate based on Uruguayan agricultural zoning
+            if (lat > -32.5) // Northern Uruguay
+            {
+                if (lon > -56.5) // Northwest: Salto, Paysandú, Artigas
+                {
+                    dto.CultivosDetectados = new List<string> { "Cítricos", "Arándanos", "Eucalipto (Plantación forestal)" };
+                    dto.CultivosDetalle = "Zonificación agropecuaria del norte: alta presencia de plantaciones de cítricos, frutales y forestación de eucalipto.";
+                    dto.FuentesAguaDetalle = "Influencia de la cuenca del Río Uruguay. Se estima disponibilidad razonable en arroyos locales y tajamares ganaderos.";
+                    dto.DistanciaAguaMasCercana = 1200;
+                }
+                else // Northeast: Rivera, Tacuarembó, Cerro Largo
+                {
+                    dto.CultivosDetectados = new List<string> { "Eucalipto", "Pinos (Forestación)", "Praderas naturales", "Arroz (zonas bajas)" };
+                    dto.CultivosDetalle = "Zonificación agro-forestal del noreste: dominancia de pasturas de campo natural y montes forestales de eucalipto/pino.";
+                    dto.FuentesAguaDetalle = "Serranías y cabeceras de cuenca (Río Negro). Abundancia de cañadas y tajamares en valles.";
+                    dto.DistanciaAguaMasCercana = 1800;
+                }
+            }
+            else // Southern Uruguay
+            {
+                if (lon > -56.5) // West: Soriano, Colonia, Río Negro, San José
+                {
+                    dto.CultivosDetectados = new List<string> { "Soja", "Trigo", "Girasol", "Alfalfa/Tréboles (Pasturas lecheras)" };
+                    dto.CultivosDetalle = "Zona agrícola núcleo del litoral oeste: predominio de cultivos de secano de alta floración melífera y praderas artificiales.";
+                    dto.FuentesAguaDetalle = "Cuencas de arroyos tributarios del Río Uruguay e importantes fuentes superficiales artificiales (tajamares).";
+                    dto.DistanciaAguaMasCercana = 1000;
+                }
+                else if (lon < -56.5 && lat < -34.3) // South: Canelones, Montevideo, Florida meridional
+                {
+                    dto.CultivosDetectados = new List<string> { "Frutales de carozo", "Viñedos", "Horticultura", "Praderas mixtas" };
+                    dto.CultivosDetalle = "Franja granjera y vitivinícola del sur: alta variedad de frutales templados, vides de floración y praderas de pastoreo intensivo.";
+                    dto.FuentesAguaDetalle = "Zona de la cuenca del Río Santa Lucía y cañadas costeras. Alta disponibilidad de fuentes superficiales.";
+                    dto.DistanciaAguaMasCercana = 1100;
+                }
+                else // East: Treinta y Tres, Rocha, Maldonado, Lavalleja
+                {
+                    dto.CultivosDetectados = new List<string> { "Praderas naturales", "Trébol blanco", "Lotos", "Monte nativo", "Arroz" };
+                    dto.CultivosDetalle = "Zona de llanuras y serranías del este: praderas con leguminosas melíferas, monte natural serrano y cuencas arroceras.";
+                    dto.FuentesAguaDetalle = "Cercanía a lagunas costeras y humedales del Este. Excelente densidad de cañadas, bañados y arroyos.";
+                    dto.DistanciaAguaMasCercana = 900;
+                }
+            }
+
+            return dto;
+        }
+
+        private static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+        {
+            var R = 6371000; // Earth's radius in meters
+            var phi1 = lat1 * Math.PI / 180;
+            var phi2 = lat2 * Math.PI / 180;
+            var deltaPhi = (lat2 - lat1) * Math.PI / 180;
+            var deltaLambda = (lon2 - lon1) * Math.PI / 180;
+
+            var a = Math.Sin(deltaPhi / 2) * Math.Sin(deltaPhi / 2) +
+                    Math.Cos(phi1) * Math.Cos(phi2) *
+                    Math.Sin(deltaLambda / 2) * Math.Sin(deltaLambda / 2);
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+            return R * c;
         }
 
         private string GetWindDirectionCard(double degree)
         {
             string[] cardinals = { "N", "NE", "E", "SE", "S", "SO", "O", "NO", "N" };
             return cardinals[(int)Math.Round((degree % 360) / 45)];
+        }
+
+        private bool IsInUruguay(double lat, double lon)
+        {
+            return lat >= -35.0 && lat <= -30.0 && lon >= -58.5 && lon <= -53.0;
         }
     }
 
@@ -256,6 +799,96 @@ namespace BeeKeeperApp.Services
         public string Aptitud { get; set; } = string.Empty;
         public string Color { get; set; } = string.Empty;
         public List<string> Detalles { get; set; } = new();
+
+        // --- HISTORIAL CLIMÁTICO (180 DÍAS) ---
+        public double LluviaAcumulada180Dias { get; set; }
+        public double LluviaPromedioDiaria180Dias { get; set; }
+        public int DiasHumedadAlta180Dias { get; set; }
+        public int DiasVientoFuerte180Dias { get; set; }
+        public double PorcentajeDiasVientoFuerte { get; set; }
+        public int DiasHeladas180Dias { get; set; }
+        public string AlertaSanitaria { get; set; } = string.Empty;
+        public bool TieneDatosHistoricos { get; set; }
+
+        // --- ENTORNO GEOGRÁFICO (3KM) ---
+        public int ApiariosCercanosCount { get; set; }
+        public double? DistanciaApiarioMasCercano { get; set; }
+        public double? DistanciaAguaMasCercana { get; set; }
+        public List<string> CultivosDetectados { get; set; } = new();
+        public bool TieneAguaCercana { get; set; }
+        public string FuentesAguaDetalle { get; set; } = string.Empty;
+        public string CultivosDetalle { get; set; } = string.Empty;
+        public string CultivosOrigen { get; set; } = "No detectado";
+        public string AguaOrigen { get; set; } = "No detectado";
+
+        // --- RAZONES DETALLADAS ---
+        public List<string> RazonesSi { get; set; } = new();
+        public List<string> RazonesNo { get; set; } = new();
+    }
+
+    public class NearbyApiaryDto
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public double Latitud { get; set; }
+        public double Longitud { get; set; }
+        public double DistanciaMetros { get; set; }
+    }
+
+    public class OverpassResponse
+    {
+        [JsonPropertyName("elements")]
+        public List<OverpassElement> Elements { get; set; } = new();
+    }
+
+    public class OverpassElement
+    {
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = string.Empty;
+
+        [JsonPropertyName("lat")]
+        public double? Lat { get; set; }
+
+        [JsonPropertyName("lon")]
+        public double? Lon { get; set; }
+
+        [JsonPropertyName("center")]
+        public OverpassCenter? Center { get; set; }
+
+        [JsonPropertyName("tags")]
+        public Dictionary<string, string> Tags { get; set; } = new();
+    }
+
+    public class OverpassCenter
+    {
+        [JsonPropertyName("lat")]
+        public double Lat { get; set; }
+
+        [JsonPropertyName("lon")]
+        public double Lon { get; set; }
+    }
+
+    public class OpenMeteoArchiveResponse
+    {
+        [JsonPropertyName("daily")]
+        public DailyArchiveData Daily { get; set; } = new();
+    }
+
+    public class DailyArchiveData
+    {
+        [JsonPropertyName("time")]
+        public List<string> Time { get; set; } = new();
+
+        [JsonPropertyName("precipitation_sum")]
+        public List<double?> PrecipitationSum { get; set; } = new();
+
+        [JsonPropertyName("relative_humidity_2m_mean")]
+        public List<double?> RelativeHumidity2mMean { get; set; } = new();
+
+        [JsonPropertyName("temperature_2m_mean")]
+        public List<double?> Temperature2mMean { get; set; } = new();
+
+        [JsonPropertyName("wind_speed_10m_max")]
+        public List<double?> WindSpeed10mMax { get; set; } = new();
     }
 
     public class OpenMeteoResponse

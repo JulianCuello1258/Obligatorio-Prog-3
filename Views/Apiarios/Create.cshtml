@@ -147,8 +147,8 @@
                     });
                 } else {
                     map.invalidateSize();
-                    var currentLat = document.getElementById('latInput').value || -34.9011;
-                    var currentLng = document.getElementById('lngInput').value || -56.1645;
+                    var currentLat = document.getElementById('latInput').value;
+                    var currentLng = document.getElementById('lngInput').value;
                     if (currentLat && currentLng) {
                         map.setView([currentLat, currentLng], 10);
                         if (marker) {

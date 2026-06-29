@@ -376,7 +376,6 @@ C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\rjsmcshtml.dswa.
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\scopedcss\bundle\BeeKeeperApp.styles.css
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\scopedcss\projectbundle\BeeKeeperApp.bundle.scp.css
-C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\tgwmu1lmtu-{0}-5quwk9tqxr-5quwk9tqxr.gz
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\hcjot9d9sn-{0}-yy6vkrr4wc-yy6vkrr4wc.gz
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\4qcznr6chg-{0}-j4fd429b2q-j4fd429b2q.gz
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\ecwb1g2ps8-{0}-eb6rmyd2wd-eb6rmyd2wd.gz
@@ -454,4 +453,5 @@ C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\refint\BeeKeeper
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\BeeKeeperApp.pdb
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\BeeKeeperApp.genruntimeconfig.cache
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\ref\BeeKeeperApp.dll
-C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\3p024mz72f-{0}-8qvtslz18x-8qvtslz18x.gz
+C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\tgwmu1lmtu-{0}-wph7kv3nwg-wph7kv3nwg.gz
+C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\3p024mz72f-{0}-pphxxuqwmb-pphxxuqwmb.gz

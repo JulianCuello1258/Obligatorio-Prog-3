@@ -14,6 +14,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddHttpClient<WeatherService>();
+builder.Services.AddMemoryCache();
 
 builder.Services.AddSession(options => {
     options.IdleTimeout = TimeSpan.FromHours(24);
