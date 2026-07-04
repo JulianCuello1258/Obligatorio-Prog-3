@@ -1,119 +1,100 @@
-# 🐝 Sanganos S.A. - Sistema de Gestión Apícola
+# 🐝 Sanganos S.A. — Sistema de Gestión Apícola
+## 📚 Guía de Evaluación para el Docente
 
-¡Bienvenido a **Sanganos S.A.**! Este sistema está diseñado para ayudar al **apicultor Matías Verges** a gestionar sus apiarios, colmenas, reinas, sanidad, producción de miel, tareas de mantenimiento y movimientos de trashumancia. Además, cuenta con un módulo de inteligencia climática y geográfica que evalúa la aptitud de los terrenos para instalar nuevos apiarios utilizando datos satelitales y de OpenStreetMap.
+¡Bienvenido al sistema **Sanganos S.A.**! Esta plataforma web interactiva está diseñada para resolver los desafíos cotidianos del apicultor, facilitando la administración de colmenas y automatizando las declaraciones institucionales. 
 
-Este documento sirve como **guía e índice de archivos** para comprender la estructura del proyecto y saber dónde se gestiona cada función del trabajo diario en el campo.
-
----
-
-## 🗺️ Guía de Módulos para el Apicultor
-
-A continuación se detallan los módulos clave de la aplicación, asociando sus archivos fuente correspondientes para facilitar su localización:
-
-### 1. Mapa e Instalación de Apiarios
-* **Propósito**: Permite al apicultor buscar ubicaciones en el mapa y analizar la aptitud del terreno para la instalación de colmenas. Evalúa factores críticos como la presencia de cultivos melíferos (soja, girasol, cítricos), distancia a fuentes de agua dulce y el riesgo sanitario de *Nosema* (basado en la humedad ambiental histórica).
-* **Vistas (Frontend)**:
-  * [Mapa/Index.cshtml (Vista del Mapa)](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Views/Mapa/Index.cshtml) — Panel visual y mapa interactivo.
-  * [apiario-clima.js (Lógica del Clima)](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/wwwroot/js/apiario-clima.js) — Muestra badges de aptitud ("Estimado por Zona" / "Detectado por OSM") y calcula los semáforos de distancia a fuentes de agua.
-* **Backend y APIs**:
-  * [MapaController.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Controllers/MapaController.cs) y [ApiariosController.cs:Clima](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Controllers/ApiariosController.cs#L20-L29) — Controlan los endpoints del mapa y la aptitud.
-  * [WeatherService.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Services/WeatherService.cs) — Servicio central que consume Open-Meteo (clima actual e histórico de 180 días) y Overpass API (OSM) para agua y cultivos. Implementa caché en memoria de 24 horas para optimizar el rendimiento.
-
-### 2. Gestión de Apiarios y Competencia
-* **Propósito**: Alta, baja, modificación y listado de los apiarios físicos del productor (fijos o trasladables, ubicación en Uruguay, sección policial, etc.). Permite comparar el rendimiento productivo entre distintos apiarios.
-* **Archivos Relacionados**:
-  * [ApiariosController.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Controllers/ApiariosController.cs) — Controlador con el CRUD y la vista de comparación de producción.
-  * [Apiario.cs (Modelo de Apiario)](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Models/Entities/Apiario.cs) — Estructura de la entidad con sus propiedades.
-  * [Views/Apiarios/](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Views/Apiarios/) — Formularios de creación, edición, detalles y la tabla comparativa.
-
-### 3. Registro de Colmenas y Control de Reinas
-* **Propósito**: Permite llevar el inventario de las colmenas en cada apiario. Registra el tipo de colmena (Langstroth, Dadant), nivel de población (Fuerte, Media, Débil), temperamento (Mansa, Agresiva) y el estado de salud/presencia de la reina.
-* **Archivos Relacionados**:
-  * [ColmenasController.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Controllers/ColmenasController.cs) — Gestión de colmenas.
-  * [Colmena.cs (Modelo de Colmena)](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Models/Entities/Colmena.cs) — Entidad de colmena.
-  * [Reina.cs (Modelo de Reina)](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Models/Entities/Reina.cs) — Estado de la reina y fecha de nacimiento.
-  * [Views/Colmenas/](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Views/Colmenas/) — Vistas para registrar y auditar colmenas y sus reinas.
-
-### 4. Sanidad Apícola e Inspecciones de Campo
-* **Propósito**: Control de plagas y enfermedades (principalmente *Varroasis* y *Nosemosis*). El apicultor registra los síntomas detectados, tratamientos aplicados (ej. Ácido Oxálico) y programa las próximas dosis. Cuenta con **transcripción de voz** para facilitar la toma de notas en el campo con las manos ocupadas.
-* **Archivos Relacionados**:
-  * [SanidadController.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Controllers/SanidadController.cs) — Lógica de inspecciones sanitarias.
-  * [Revision.cs (Modelo de Revisión)](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Models/Entities/Revision.cs) — Registra la ficha clínica de la colmena.
-  * [voiceTranscription.js](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/wwwroot/js/voiceTranscription.js) — Módulo JS de reconocimiento de voz (Speech-to-Text).
-  * [Views/Sanidad/](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Views/Sanidad/) — Vistas para el historial clínico y registro de inspecciones sanitarias.
-
-### 5. Cosecha y Producción de Miel
-* **Propósito**: Registra las extracciones de miel en kilogramos de cada colmena para evaluar la productividad individual y colectiva de los apiarios.
-* **Archivos Relacionados**:
-  * [ProduccionController.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Controllers/ProduccionController.cs) — Gestión de cosechas.
-  * [Extraccion.cs (Modelo de Extracción)](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Models/Entities/Extraccion.cs) — Registro de kilogramos y fecha.
-  * [Views/Produccion/](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Views/Produccion/) — Interfaz para registrar extracciones y ver estadísticas.
-
-### 6. Agenda de Tareas Apícolas
-* **Propósito**: Una agenda de tareas programadas para el mantenimiento del apiario (ej. "Cortar pasto", "Aplicar tratamiento contra Varroa", "Alimentar colmenas"). Se vincula a apiarios o colmenas específicas.
-* **Archivos Relacionados**:
-  * [TareasController.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Controllers/TareasController.cs) — Controlador de la agenda.
-  * [Tarea.cs (Modelo de Tarea)](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Models/Entities/Tarea.cs) — Entidad de la tarea (título, descripción, fecha programada, completada).
-  * [Views/Tareas/](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Views/Tareas/) — Tablero o listado de tareas pendientes y realizadas.
-
-### 7. Trashumancia
-* **Propósito**: Planificación y registro del traslado físico de colmenas de un apiario origen a un apiario destino, validando que el apiario de destino tenga la trashumancia habilitada y calculando la distancia del recorrido.
-* **Archivos Relacionados**:
-  * [TrashumanciaController.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Controllers/TrashumanciaController.cs) — Controlador de traslados.
-  * [Trashumancia.cs (Modelo de Trashumancia)](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Models/Entities/Trashumancia.cs) — Historial de traslados entre apiarios.
-  * [Views/Trashumancia/](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Views/Trashumancia/) — Vistas para planificar un nuevo traslado.
+Este documento ha sido redactado como una **guía práctica de navegación** para orientarlo en la corrección, detallando qué hace cada sección y cómo probar sus características más importantes paso a paso sin profundizar en tecnicismos de código.
 
 ---
 
-## 📂 Índice de Documentación y Planificaciones
+## 🚀 Cómo Iniciar la Aplicación
 
-Toda la documentación conceptual y de desarrollo técnico se encuentra centralizada en la carpeta [documentacion/](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/documentacion/):
+Para desplegar el sistema localmente y comenzar con la evaluación, siga estos sencillos pasos:
 
-* 📄 [documentacion/planes/Obligatorio - Ing. Software.docx](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/documentacion/planes/Obligatorio%20-%20Ing.%20Software.docx)
-  * **Descripción**: Documento principal del obligatorio escolar/universitario. Contiene la especificación de requisitos de software, casos de uso, diagrama de clases, reglas de negocio y alcance del sistema apícola.
-* 📝 [documentacion/planes/implementation_plan.md](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/documentacion/planes/implementation_plan.md)
-  * **Descripción**: Plan de implementación técnica para la evaluación enriquecida climática y geográfica. Detalla los offsets de 10 días para Open-Meteo, umbrales empíricos de Nosema (días de humedad > 80%), caching de Overpass API y el fallback regional de cultivos.
-
----
-
-## 🛠️ Índice General del Código Fuente
-
-A continuación se detalla la ubicación de los archivos más importantes del proyecto para fines de desarrollo o mantenimiento técnico:
-
-### Estructura del Backend (ASP.NET Core MVC)
-
-| Archivo / Carpeta | Descripción |
-| :--- | :--- |
-| 🗄️ [Data/ApplicationDbContext.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Data/ApplicationDbContext.cs) | Contexto de Entity Framework Core para la persistencia en base de datos SQL Server. |
-| 🌱 [Data/DbInitializer.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Data/DbInitializer.cs) | Carga de datos semilla iniciales para pruebas rápidas (apiarios, colmenas, tareas, tratamientos). |
-| 🛡️ [Filters/SessionAuthAttribute.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Filters/SessionAuthAttribute.cs) | Filtro personalizado que valida que el usuario apicultor haya iniciado sesión antes de acceder al sistema. |
-| ⚙️ [Program.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Program.cs) | Punto de entrada de la aplicación. Configura la inyección de dependencias (`IMemoryCache`, `WeatherService`, `DbContext`) y los middleware. |
-| 🌍 [appsettings.json](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/appsettings.json) | Configuración general de la aplicación, incluyendo la cadena de conexión a SQL Server. |
-
-### Modelos de Datos (`Models/Entities/`)
-
-Representan los objetos de negocio del dominio de la apicultura:
-* [Enums.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Models/Entities/Enums.cs) — Contiene los tipos y estados del negocio (Tipo de apiario, nivel de población, temperamento, salud de la reina, tipo de revisión, etc.).
-* [Clima.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Models/Entities/Clima.cs) — Entidad para almacenar lecturas de clima específicas.
-* [Exportacion.cs](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/Models/Entities/Exportacion.cs) — Registro y validación de exportaciones de miel.
-
-### Frontend Estático (`wwwroot/`)
-
-* 🎨 [wwwroot/css/beekeeper.css](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/wwwroot/css/beekeeper.css) — Estilos personalizados con colores y temática apícola (tonos miel, ámbar, verde naturaleza).
-* 🪄 [wwwroot/js/animations.js](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/wwwroot/js/animations.js) — Micro-animaciones para mejorar la experiencia de usuario y hacer la interfaz dinámica.
+1. **Requisitos previos:** Asegúrese de tener instalado el SDK de .NET y una base de datos local (SQL Server Express).
+2. **Ejecutar el Servidor:** Abra una consola en el directorio raíz del proyecto y ejecute:
+   ```bash
+   dotnet watch run
+   ```
+3. **Acceder a la Web:** Una vez iniciado, abra su navegador e ingrese a la dirección local provista en la terminal (por ejemplo, `https://localhost:7198`).
+4. **Datos de Prueba Iniciales:** El sistema se autoinicializa con un juego de datos cargados de antemano (apiarios en Melilla, Ruta 5, colmenas activas, registros de sanidad y tareas pendientes) para que pueda probar la plataforma de inmediato sin necesidad de completar formularios vacíos desde cero.
 
 ---
 
-## 🚀 Instrucciones para Iniciar el Sistema
+## 🖥️ Recorrido por las Secciones de la Página
 
-1. **Configurar Base de Datos**:
-   * Asegúrate de tener SQL Server instalado y corriendo localmente.
-   * Modifica la cadena de conexión `DefaultConnection` en el archivo [appsettings.json](file:///c:/Users/Usuario/Documents/GitHub/Obligatorio/appsettings.json) si es necesario.
-2. **Restaurar y Ejecutar**:
-   * Ejecuta el comando en tu terminal dentro de la raíz del proyecto:
-     ```bash
-     dotnet run
-     ```
-3. **Acceso al Sistema**:
-   * Abre tu navegador en la dirección local indicada por la consola (usualmente `https://localhost:7198` o similar).
-   * Al iniciar, `DbInitializer` creará automáticamente la base de datos de pruebas con apiarios de ejemplo (Melilla, Canelones, Ruta 5) y datos de producción para comenzar de inmediato.
+Al ingresar al sistema, encontrará un menú lateral de navegación rápido. A continuación, se detalla qué características buscar e interactuar en cada una de ellas:
+
+### 🔒 1. Pantalla de Acceso (Login)
+* **Qué hace:** Protege el acceso al panel del apicultor. 
+* **Qué evaluar:** La pantalla cuenta con una estética moderna de efecto vidrio templado sobre un fondo temático apícola, diseñada para una carga visual fluida y responsiva.
+
+### 📊 2. Panel Principal (Menú Principal)
+* **Qué hace:** Es la central de control del apicultor.
+* **Qué evaluar:**
+  * **Tarjetas de Estadísticas:** Muestran de forma dinámica el número de apiarios totales, colmenas activas y tareas pendientes.
+  * **Inspecciones Recientes:** Una tabla de auditoría clínica rápida que clasifica a las colmenas como "Saludable" o "Enferma" según los últimos reportes de campo.
+  * **Acciones Rápidas:** Botones directos para agilizar las operaciones de uso frecuente.
+
+### 🗺️ 3. Mapa de Exploración y Aptitud Geográfica
+* **Qué hace:** Permite buscar y evaluar terrenos en Uruguay antes de instalar físicamente un apiario.
+* **Qué evaluar:**
+  * **Marcador Leaflet:** Haga clic en cualquier punto del mapa para mover el pin o ingrese coordenadas de latitud/longitud.
+  * **Algoritmo de Aptitud Apícola:** El sistema evalúa automáticamente la viabilidad de la zona basándose en:
+    * **Clima histórico (180 días):** Identifica heladas invernales severas, vientos excesivos o sequías.
+    * **Entorno Geográfico:** Busca recursos hídricos naturales (lagunas, arroyos) y zonas de cultivos melíferos (soja, girasol, cítricos) en un radio de 3 km mediante mapas satelitales.
+    * **Riesgo Sanitario:** Alerta si la humedad histórica favorece la aparición de parásitos o enfermedades.
+  * **Semáforos de Ubicación:** Muestra de forma interactiva una puntuación final (Óptimo, Aceptable o No Recomendado) con badges verdes, amarillos y rojos según la idoneidad.
+
+### 🛖 4. Gestión de Apiarios
+* **Qué hace:** Administra los establecimientos de colmenas.
+* **Qué evaluar:**
+  * **Carga de Producción Acumulada:** Cada tarjeta de apiario muestra el volumen de miel total extraído de todas sus colmenas en tiempo real (ej. *Producido: 340,5 kg*).
+  * **Autocompletado de Datos (Ubicación):** Al crear o editar un apiario, si selecciona una ubicación en el mapa, los campos de *Departamento*, *Sección Policial*, *Paraje/Localidad* y la sugerencia de *Trashumancia* se rellenan automáticamente con una animación de brillo dorado.
+  * **Comparación de Apiarios:** Permite comparar el rendimiento neto en kilos de miel de todos los apiarios en una tabla organizada para identificar los terrenos más rentables.
+
+### 🐝 5. Gestión de Colmenas
+* **Qué hace:** Registra e inventaría las poblaciones de abejas.
+* **Qué evaluar:**
+  * **Registro Masivo (En Cantidad):** En el formulario de creación, defina los parámetros generales y asigne una cantidad (por ejemplo, registrar 30 colmenas juntas en un solo paso).
+  * **Control de la Reina:** Active o desactive el checkbox de "Reina Presente". Si se desmarca, los campos de salud y fecha de nacimiento se deshabilitan y limpian de inmediato para evitar incoherencias.
+  * **Filtros Avanzados:** Ordene el listado general por ID, Fecha de creación, Tipo, Nivel de población (Fuerte > Media > Débil) o por cantidad de miel producida.
+
+### 🩺 6. Sanidad e Inspecciones Clínicas
+* **Qué hace:** Historial médico de las colmenas y tratamientos aplicados.
+* **Qué evaluar:**
+  * **Registro de Revisión:** Permite realizar una inspección a una colmena específica o a un apiario completo.
+  * **Transcripción de Voz a Texto:** Incluye un botón de micrófono para que el apicultor pueda dictar las notas de campo (enfermedades, observaciones) sin necesidad de escribir en el teclado (ideal para el trabajo con guantes).
+  * **Reglas de Tratamiento:** Si se selecciona un medicamento, el sistema exige de forma obligatoria ingresar una fecha para la segunda dosis y bloquea fechas incoherentes en el futuro para la reina.
+
+### 🍯 7. Registro de Cosechas (Producción)
+* **Qué hace:** Registra las extracciones periódicas de miel.
+* **Qué evaluar:**
+  * **Formulario Adaptativo:** Permite alternar mediante botones rápidos si la cosecha se registra "Por Apiario" (producción global dividida equitativamente) o "Por Colmena" (rendimiento detallado individual).
+
+### 🚚 8. Planificación de Trashumancia (Traslados)
+* **Qué hace:** Gestiona la movilidad de colmenas para aprovechar floraciones estacionales.
+* **Qué evaluar:**
+  * **Cálculo de Distancia Automático:** Al seleccionar el apiario de origen y el de destino, la aplicación calcula la distancia vial real entre ambos puntos en kilómetros.
+  * **Validación de Destino:** Impide el traslado si el apiario receptor no cuenta con la habilitación para recibir colmenas.
+
+### 🚢 9. Exportación y Declaración Jurada (MGAP)
+* **Qué hace:** Genera la documentación oficial para la venta y exportación de miel.
+* **Qué evaluar:**
+  * **Control de Stock en Exportación:** Al registrar una venta internacional, el sistema valida que no se supere la miel disponible en stock (evitando números negativos o desbordamientos).
+  * **Declaración Jurada Oficial (Impresión y PDF):** Genera el formulario con el formato institucional del Ministerio de Ganadería, Agricultura y Pesca de Uruguay (MGAP).
+  * **Formato A4 Limpio:** Al imprimir (`Ctrl + P` o botón Imprimir), el documento se reorganiza en hojas independientes respetando los márgenes A4, oculta controles web interactivos y añade la firma de exoneración del timbre profesional (Sección D) al pie de la segunda página.
+
+### 📅 10. Agenda de Tareas de Mantenimiento
+* **Qué hace:** Planificador de actividades del apicultor.
+* **Qué evaluar:**
+  * Permite agendar tareas preventivas y marcarlas como completadas mediante un sistema ágil de tarjetas transparentes.
+
+---
+
+## 🎨 Características de Diseño a Observar
+
+Durante su corrección, notará un enfoque prioritario en la experiencia de usuario (UX) mediante:
+* **Diseño Glassmorphism (Efecto Vidrio):** Paneles translúcidos sobre fondo dinámico que otorgan profundidad.
+* **Micro-animaciones:** Efectos de transición en botones, cambios de pestañas y glows informativos al autocompletarse datos del mapa.
+* **Responsive Design:** La navegación lateral se adapta automáticamente a pantallas de tabletas y dispositivos móviles.
