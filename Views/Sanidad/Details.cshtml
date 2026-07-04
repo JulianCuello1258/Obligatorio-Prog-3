@@ -7,7 +7,7 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="glass-card">
-            <h2 class="h4 mb-4">Detalle de Inspección Sanitaria</h2>
+
             
             <div class="row mb-3">
                 <div class="col-sm-4 fw-bold">Fecha:</div>
@@ -16,12 +16,12 @@
 
             <div class="row mb-3">
                 <div class="col-sm-4 fw-bold">Apiario:</div>
-                <div class="col-sm-8">@(Model.Colmena?.Apiario?.Nombre ?? "-")</div>
+                <div class="col-sm-8">@(Model.Apiario?.Nombre ?? Model.Colmena?.Apiario?.Nombre ?? "-")</div>
             </div>
 
             <div class="row mb-3">
                 <div class="col-sm-4 fw-bold">Colmena:</div>
-                <div class="col-sm-8">#@Model.ColmenaId</div>
+                <div class="col-sm-8">@(Model.ColmenaId.HasValue ? "#" + Model.ColmenaId.ToString() : "Todas")</div>
             </div>
 
             <hr />
@@ -83,7 +83,7 @@
             </div>
 
             <div class="mt-4">
-                <a asp-action="Index" class="btn btn-outline-dark w-100">Volver a Sanidad</a>
+                <a asp-action="Index" class="btn btn-outline-dark w-100">Volver a Inspecciones</a>
             </div>
         </div>
     </div>

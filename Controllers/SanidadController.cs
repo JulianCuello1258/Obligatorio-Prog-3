@@ -104,6 +104,7 @@ namespace BeeKeeperApp.Controllers
             if (id == null) return NotFound();
 
             var revision = await _context.Revisiones
+                .Include(r => r.Apiario)
                 .Include(r => r.Colmena)
                 .ThenInclude(c => c!.Apiario)
                 .FirstOrDefaultAsync(m => m.Id == id);
