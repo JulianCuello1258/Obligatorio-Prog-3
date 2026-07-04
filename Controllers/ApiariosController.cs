@@ -38,6 +38,7 @@ namespace BeeKeeperApp.Controllers
             var apiarios = await _context.Apiarios
                 .Include(a => a.Colmenas)
                     .ThenInclude(c => c.Extracciones)
+                .Include(a => a.Extracciones)
                 .ToListAsync();
 
             apiarios = sortBy switch
@@ -45,8 +46,8 @@ namespace BeeKeeperApp.Controllers
                 "Fecha"     => descending ? apiarios.OrderByDescending(s => s.Id).ToList()
                                           : apiarios.OrderBy(s => s.Id).ToList(),
                 "Produccion" => descending
-                                ? apiarios.OrderByDescending(s => s.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg)).ToList()
-                                : apiarios.OrderBy(s => s.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg)).ToList(),
+                                ? apiarios.OrderByDescending(s => s.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg) + s.Extracciones.Sum(e => e.CantidadKg)).ToList()
+                                : apiarios.OrderBy(s => s.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg) + s.Extracciones.Sum(e => e.CantidadKg)).ToList(),
                 "Nombre"    => descending ? apiarios.OrderByDescending(s => s.Nombre).ToList()
                                           : apiarios.OrderBy(s => s.Nombre).ToList(),
                 _           => descending ? apiarios.OrderByDescending(s => s.Nombre).ToList()
@@ -189,6 +190,7 @@ namespace BeeKeeperApp.Controllers
             var apiarios = await _context.Apiarios
                 .Include(a => a.Colmenas)
                     .ThenInclude(c => c.Extracciones)
+                .Include(a => a.Extracciones)
                 .ToListAsync();
 
             var model = apiarios.Select(a => new ApiarioComparacionViewModel
@@ -197,7 +199,7 @@ namespace BeeKeeperApp.Controllers
                 Nombre = a.Nombre,
                 TotalColmenas = a.Colmenas.Count,
                 ColmenasActivas = a.Colmenas.Count(c => c.Estado == EstadoColmena.Activa),
-                ProduccionTotal = a.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg)
+                ProduccionTotal = a.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg) + a.Extracciones.Sum(e => e.CantidadKg)
             }).OrderByDescending(x => x.ProduccionTotal).ToList();
 
             return View(model);

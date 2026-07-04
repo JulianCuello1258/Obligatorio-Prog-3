@@ -38,7 +38,7 @@
                 </p>
 
                 @{
-                    var produccionTotal = item.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg);
+                    var produccionTotal = item.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg) + item.Extracciones.Sum(e => e.CantidadKg);
                 }
                 <div class="stats-grid mt-3">
                     <div class="stat-item">

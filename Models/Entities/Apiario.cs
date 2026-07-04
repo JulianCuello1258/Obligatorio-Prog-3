@@ -26,5 +26,6 @@ namespace BeeKeeperApp.Models.Entities
         public string? Departamento { get; set; }
         public string? Paraje { get; set; }
         public ICollection<Colmena> Colmenas { get; set; } = new List<Colmena>();
+        public ICollection<Extraccion> Extracciones { get; set; } = new List<Extraccion>();
     }
 }
