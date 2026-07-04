@@ -3,6 +3,8 @@ using BeeKeeperApp.Data;
 using BeeKeeperApp.Filters;
 using BeeKeeperApp.Services;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

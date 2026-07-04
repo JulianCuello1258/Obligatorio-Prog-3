@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BeeKeeperApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1decf48c3934f68db47b27b19ea66ee1db92a1ea")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+90367177186eb145f438eb108c42fbe0d7af4504")]
 [assembly: System.Reflection.AssemblyProductAttribute("BeeKeeperApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BeeKeeperApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
