@@ -10,8 +10,15 @@ builder.Services.AddControllersWithViews(options => {
     options.Filters.Add<SessionAuthAttribute>();
 });
 
+// Configurar Kestrel para escuchar en el puerto inyectado por Render
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(int.Parse(port));
+});
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddHttpClient<WeatherService>();
 builder.Services.AddMemoryCache();
