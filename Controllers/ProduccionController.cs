@@ -22,6 +22,7 @@ namespace BeeKeeperApp.Controllers
             ViewBag.Descending = descending;
 
             var query = _context.Extracciones
+                .Include(e => e.Apiario)
                 .Include(e => e.Colmena)
                 .ThenInclude(c => c!.Apiario)
                 .AsQueryable();
@@ -121,7 +122,6 @@ namespace BeeKeeperApp.Controllers
                 }
                 else // Apiario
                 {
-                    // Dividimos únicamente entre las colmenas con estado Activa en dicho apiario
                     var colmenasActivas = await _context.Colmenas
                         .Where(c => c.ApiarioId == model.ApiarioId!.Value && c.Estado == EstadoColmena.Activa)
                         .ToListAsync();
@@ -130,24 +130,46 @@ namespace BeeKeeperApp.Controllers
                     {
                         ModelState.AddModelError("ApiarioId", "El apiario no tiene colmenas activas para realizar la extracción.");
                     }
-                    else
+                    else if (model.DistribuirEntreColmenas)
                     {
+                        // Distribuir igualitariamente: un registro por colmena activa
                         double cantidadPorColmena = model.CantidadKg / colmenasActivas.Count;
                         foreach (var colmena in colmenasActivas)
                         {
-                            var extraccion = new Extraccion
+                            _context.Add(new Extraccion
                             {
                                 ColmenaId = colmena.Id,
                                 CantidadKg = cantidadPorColmena,
                                 Fecha = model.Fecha
-                            };
-                            _context.Add(extraccion);
-                            colmena.ProduccionAcumulada = 0; // Reset to 0
+                            });
+                            colmena.ProduccionAcumulada = 0;
                             _context.Update(colmena);
                         }
 
                         await _context.SaveChangesAsync();
-                        TempData["Toast"] = $"Extracción de {model.CantidadKg} kg distribuida entre {colmenasActivas.Count} colmenas activas del apiario.";
+                        TempData["Toast"] = $"Extracción de {model.CantidadKg} kg distribuida igualitariamente entre {colmenasActivas.Count} colmenas activas del apiario ({cantidadPorColmena:N1} kg c/u).";
+                        TempData["ToastType"] = "success";
+                        return RedirectToAction(nameof(Index));
+                    }
+                    else
+                    {
+                        // Registro único agrupado por apiario
+                        _context.Add(new Extraccion
+                        {
+                            ApiarioId = model.ApiarioId!.Value,
+                            ColmenaId = null,
+                            CantidadKg = model.CantidadKg,
+                            Fecha = model.Fecha
+                        });
+
+                        foreach (var colmena in colmenasActivas)
+                        {
+                            colmena.ProduccionAcumulada = 0;
+                            _context.Update(colmena);
+                        }
+
+                        await _context.SaveChangesAsync();
+                        TempData["Toast"] = $"Extracción de {model.CantidadKg} kg registrada correctamente para el apiario ({colmenasActivas.Count} colmenas activas).";
                         TempData["ToastType"] = "success";
                         return RedirectToAction(nameof(Index));
                     }

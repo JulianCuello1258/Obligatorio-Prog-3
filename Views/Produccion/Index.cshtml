@@ -61,9 +61,16 @@
                     <tr>
                         <td class="text-nowrap">@item.Fecha.ToString("dd/MM/yyyy")</td>
                         <td class="text-nowrap">
-                            <a href="/Colmenas/Details/@item.ColmenaId" class="text-decoration-none fw-bold text-dark hover-honey">#@item.ColmenaId</a>
+                            @if (item.ColmenaId.HasValue)
+                            {
+                                <a href="/Colmenas/Details/@item.ColmenaId" class="text-decoration-none fw-bold text-dark hover-honey">#@item.ColmenaId</a>
+                            }
+                            else
+                            {
+                                <span class="text-muted fst-italic">Todas</span>
+                            }
                         </td>
-                        <td class="text-nowrap">@(item.Colmena?.Apiario?.Nombre ?? "-")</td>
+                        <td class="text-nowrap">@(item.Apiario?.Nombre ?? item.Colmena?.Apiario?.Nombre ?? "-")</td>
                         <td class="text-nowrap fw-bold text-honey-dark">@item.CantidadKg.ToString("N1") Kg</td>
                         <td class="text-nowrap text-end">
                             <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('¿Está seguro de que desea quitar esta cosecha? Esta acción solo eliminará el registro y no afectará la producción acumulada de la colmena ni ninguna otra información.');" class="d-inline">

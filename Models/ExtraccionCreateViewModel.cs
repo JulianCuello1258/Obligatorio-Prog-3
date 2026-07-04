@@ -18,5 +18,11 @@ namespace BeeKeeperApp.Models
 
         [Required(ErrorMessage = "La fecha es requerida.")]
         public DateTime Fecha { get; set; } = DateTime.Now;
+
+        /// <summary>
+        /// Si es true, divide la cosecha entre todas las colmenas activas del apiario.
+        /// Si es false, guarda un único registro agrupado para el apiario.
+        /// </summary>
+        public bool DistribuirEntreColmenas { get; set; } = false;
     }
 }

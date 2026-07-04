@@ -43,7 +43,16 @@
                         <option value="">-- Seleccionar Apiario --</option>
                     </select>
                     <span asp-validation-for="ApiarioId" class="text-danger small"></span>
-                    <div class="form-text text-muted">La cosecha se distribuirá proporcionalmente entre todas las colmenas activas del apiario.</div>
+
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" asp-for="DistribuirEntreColmenas" id="chkDistribuir" onchange="actualizarTextoApiario()" />
+                        <label class="form-check-label" for="chkDistribuir">
+                            Distribuir igualitariamente entre todas las colmenas activas
+                        </label>
+                    </div>
+                    <div class="form-text text-muted mt-1" id="textoModoApiario">
+                        La cosecha se registrará como un único total para el apiario.
+                    </div>
                 </div>
 
                 <div class="row">
@@ -86,9 +95,20 @@
             }
         }
 
+        function actualizarTextoApiario() {
+            var chk = document.getElementById('chkDistribuir');
+            var txt = document.getElementById('textoModoApiario');
+            if (chk.checked) {
+                txt.textContent = 'La cosecha se dividirá igualitariamente entre todas las colmenas activas del apiario.';
+            } else {
+                txt.textContent = 'La cosecha se registrará como un único total para el apiario.';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             var tipo = document.getElementById('tipoRegistroInput').value || 'Apiario';
             setTipo(tipo);
+            actualizarTextoApiario();
         });
     </script>
 }
