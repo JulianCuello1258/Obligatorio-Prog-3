@@ -1,8 +1,19 @@
 @model BeeKeeperApp.Models.Entities.Apiario
+@using BeeKeeperApp.Models.Entities
 
 @{
     ViewData["Title"] = "Detalle de Apiario";
-    var produccionTotalApiario = Model.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg);
+
+    var extraccionesApiario = (ViewBag.ExtraccionesApiario as List<Extraccion>) ?? new List<Extraccion>();
+    var totalApiarioKg = extraccionesApiario.Sum(e => e.CantidadKg);
+
+    // Colmenas activas para calcular la parte proporcional
+    var colmenasActivas = Model.Colmenas.Where(c => c.Estado == EstadoColmena.Activa).ToList();
+    int cantActivas = colmenasActivas.Count > 0 ? colmenasActivas.Count : 1;
+    double kgPorColmenaActiva = totalApiarioKg / cantActivas;
+
+    // Producción total = extracciones individuales por colmena + extracciones de apiario
+    var produccionTotalApiario = Model.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg) + totalApiarioKg;
 }
 
 <div class="row">
@@ -42,6 +53,11 @@
                 <tbody>
                     @foreach (var c in Model.Colmenas) {
                         var prodColmena = c.Extracciones.Sum(e => e.CantidadKg);
+                        // Sumar parte proporcional de extracciones de apiario (solo colmenas activas)
+                        if (c.Estado == EstadoColmena.Activa && kgPorColmenaActiva > 0)
+                        {
+                            prodColmena += kgPorColmenaActiva;
+                        }
                         <tr>
                             <td>#@c.Id</td>
                             <td>@c.Estado</td>

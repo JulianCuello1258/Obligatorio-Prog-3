@@ -68,6 +68,13 @@ namespace BeeKeeperApp.Controllers
 
             if (apiario == null) return NotFound();
 
+            // Extracciones registradas a nivel apiario (sin colmena específica)
+            var extraccionesApiario = await _context.Extracciones
+                .Where(e => e.ApiarioId == id && e.ColmenaId == null)
+                .ToListAsync();
+
+            ViewBag.ExtraccionesApiario = extraccionesApiario;
+
             return View(apiario);
         }
 
