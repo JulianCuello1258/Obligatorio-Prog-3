@@ -10,10 +10,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("a0381e07-daac-42c8-8c50-820c621f896c")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("BeeKeeperApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d2ce13178d338687f97f43e9093b24865109a63a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b548b7fbf89c6103ec1aa42c60ff5337c97a21b6")]
 [assembly: System.Reflection.AssemblyProductAttribute("BeeKeeperApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BeeKeeperApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

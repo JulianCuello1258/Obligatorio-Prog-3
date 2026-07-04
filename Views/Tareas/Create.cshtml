@@ -7,39 +7,100 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="glass-card">
-            <h2 class="h4 mb-4">Registrar Nueva Tarea</h2>
             <form asp-action="Create">
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Error:</strong> Por favor, verifique los campos del formulario.
+                        <button type="button" class="btn-close" data-bs-alert="dismiss" aria-label="Close"></button>
+                    </div>
+                }
+
                 <div class="mb-3">
-                    <label asp-for="Titulo" class="form-label">Título</label>
-                    <input asp-for="Titulo" class="form-control" required />
+                    <label asp-for="Titulo" class="form-label fw-bold">Título</label>
+                    <input asp-for="Titulo" class="form-control" placeholder="Ej: Limpieza de malezas o control de plagas" required />
+                    <span asp-validation-for="Titulo" class="text-danger small"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="Descripcion" class="form-label">Descripción</label>
-                    <textarea asp-for="Descripcion" class="form-control" rows="4" required></textarea>
+                    <label asp-for="Descripcion" class="form-label fw-bold">Descripción</label>
+                    <textarea asp-for="Descripcion" class="form-control" rows="4" placeholder="Detalle la tarea a realizar en el apiario o colmena..." required></textarea>
+                    <span asp-validation-for="Descripcion" class="text-danger small"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="FechaProgramada" class="form-label">Fecha Programada</label>
+                    <label asp-for="FechaProgramada" class="form-label fw-bold">Fecha Programada</label>
                     <input asp-for="FechaProgramada" class="form-control" type="date" required min="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                    <span asp-validation-for="FechaProgramada" class="text-danger small"></span>
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label asp-for="ApiarioId" class="form-label">Apiario (Opcional)</label>
-                        <select asp-for="ApiarioId" class="form-select" asp-items="ViewBag.ApiarioId">
-                            <option value="">Seleccione un apiario</option>
+                        <label asp-for="ApiarioId" class="form-label fw-bold">Apiario (Opcional)</label>
+                        <select id="apiarioSelect" asp-for="ApiarioId" class="form-select" asp-items="ViewBag.ApiarioId">
+                            <option value="">-- Seleccionar Apiario --</option>
                         </select>
+                        <span asp-validation-for="ApiarioId" class="text-danger small"></span>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label asp-for="ColmenaId" class="form-label">Colmena (Opcional)</label>
-                        <select asp-for="ColmenaId" class="form-select" asp-items="ViewBag.ColmenaId">
-                            <option value="">Seleccione una colmena</option>
+                        <label asp-for="ColmenaId" class="form-label fw-bold">Colmena (Opcional)</label>
+                        <select id="colmenaSelect" asp-for="ColmenaId" class="form-select">
+                            <option value="">-- Seleccione un apiario primero --</option>
                         </select>
+                        <span asp-validation-for="ColmenaId" class="text-danger small"></span>
                     </div>
                 </div>
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-honey w-100">Guardar Tarea</button>
-                    <a asp-action="Index" class="btn btn-link w-100 mt-2">Volver</a>
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Guardar Tarea</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+(function () {
+    const apiarioSelect = document.getElementById('apiarioSelect');
+    const colmenaSelect = document.getElementById('colmenaSelect');
+
+    async function updateColmenas() {
+        const apiarioId = parseInt(apiarioSelect.value);
+        colmenaSelect.innerHTML = '<option value="">-- Seleccionar Colmena --</option>';
+
+        if (!apiarioId) {
+            colmenaSelect.innerHTML = '<option value="">-- Seleccione un apiario primero --</option>';
+            return;
+        }
+
+        const res = await fetch(`/Tareas/GetColmenasByApiario?apiarioId=${apiarioId}`);
+        const colmenas = await res.json();
+
+        if (colmenas.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = 'No hay colmenas en este apiario';
+            colmenaSelect.appendChild(opt);
+        } else {
+            colmenas.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `Colmena #${c.id}`;
+                colmenaSelect.appendChild(opt);
+            });
+        }
+    }
+
+    apiarioSelect.addEventListener('change', updateColmenas);
+
+    // Si ya hay un apiario preseleccionado (al regresar con errores de validación), cargar colmenas
+    if (apiarioSelect.value) {
+        updateColmenas().then(() => {
+            // Restaurar la selección de colmena si existía
+            const colmenaIdOriginal = '@Model?.ColmenaId';
+            if (colmenaIdOriginal) {
+                colmenaSelect.value = colmenaIdOriginal;
+            }
+        });
+    }
+})();
+</script>
+}

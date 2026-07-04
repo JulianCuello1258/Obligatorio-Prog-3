@@ -1,52 +1,78 @@
 @model IEnumerable<BeeKeeperApp.Models.Entities.Extraccion>
 
 @{
-    ViewData["Title"] = "Producción y Exportación";
+    ViewData["Title"] = "Producción";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <a asp-action="Create" class="btn btn-honey">+ Registrar Cosecha</a>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+        <a asp-action="Create" class="btn btn-honey">+ Registrar Cosecha</a>
+        <a href="/Export/DeclaracionJurada" class="btn btn-outline-dark" target="_blank">Completar Formulario del Ministerio de Ganadería</a>
+    </div>
+    <form method="get" class="sort-control">
+        <span class="sort-label">Ordenar por:</span>
+        <select name="sortBy" onchange="this.form.submit()">
+            <option value="Fecha" selected="@(ViewBag.SortBy == "Fecha")">Fecha</option>
+            <option value="Colmena" selected="@(ViewBag.SortBy == "Colmena")">ID</option>
+            <option value="Cantidad" selected="@(ViewBag.SortBy == "Cantidad")">Cantidad</option>
+        </select>
+        <a href="?sortBy=@ViewBag.SortBy&descending=@((!ViewBag.Descending).ToString().ToLower())" class="sort-dir-btn" title="Cambiar dirección de orden">
+            @(ViewBag.Descending == true ? "▲" : "▼")
+        </a>
+    </form>
 </div>
 
 <div class="row mb-4">
-    <div class="col-md-6">
-        <div class="glass-card stat-item bg-honey-light">
-            <div class="stat-value">@ViewBag.TotalKg Kg</div>
-            <div class="stat-label">Producción Total</div>
+    <div class="col-md-4">
+        <div class="glass-card stat-item bg-honey-light mb-0">
+            <div class="stat-value">@ViewBag.TotalKg.ToString("N1") Kg</div>
+            <div class="stat-label">Producción Total Histórica</div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="glass-card stat-item bg-honey">
+    <div class="col-md-4">
+        <div class="glass-card stat-item bg-light mb-0">
+            <div class="stat-value text-primary">@ViewBag.TotalDisponible.ToString("N1") Kg</div>
+            <div class="stat-label">Stock Disponible para Exportar</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="glass-card stat-item bg-honey mb-0">
             <div class="stat-value">@ViewBag.TotalBarriles</div>
-            <div class="stat-label">Barriles para Exportación (300Kg c/u)</div>
+            <div class="stat-label">Barriles Disponibles (300Kg c/u)</div>
         </div>
     </div>
 </div>
 
 <div class="glass-card">
     <h3 class="h5 mb-4">Historial de Extracciones</h3>
-    <table class="table table-custom">
-        <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>Colmena</th>
-                <th>Apiario</th>
-                <th>Cantidad (Kg)</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model) {
+    <div class="table-responsive">
+        <table class="table table-custom align-middle">
+            <thead>
                 <tr>
-                    <td>@item.Fecha.ToShortDateString()</td>
-                    <td>#@item.ColmenaId</td>
-                    <td>@item.Colmena?.Apiario?.Nombre</td>
-                    <td class="fw-bold">@item.CantidadKg Kg</td>
+                    <th class="text-nowrap">Fecha</th>
+                    <th class="text-nowrap">Colmena</th>
+                    <th class="text-nowrap">Apiario</th>
+                    <th class="text-nowrap">Cantidad</th>
+                    <th class="text-nowrap text-end">Acciones</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-</div>
-
-<div class="mt-4">
-    <a href="/Export/DeclaracionJurada" class="btn btn-outline-dark" target="_blank">Completar Formulario del Ministerio de Ganadería</a>
+            </thead>
+            <tbody>
+                @foreach (var item in Model) {
+                    <tr>
+                        <td class="text-nowrap">@item.Fecha.ToString("dd/MM/yyyy")</td>
+                        <td class="text-nowrap">
+                            <a href="/Colmenas/Details/@item.ColmenaId" class="text-decoration-none fw-bold text-dark hover-honey">#@item.ColmenaId</a>
+                        </td>
+                        <td class="text-nowrap">@(item.Colmena?.Apiario?.Nombre ?? "-")</td>
+                        <td class="text-nowrap fw-bold text-honey-dark">@item.CantidadKg.ToString("N1") Kg</td>
+                        <td class="text-nowrap text-end">
+                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('¿Está seguro de que desea quitar esta cosecha? Esta acción solo eliminará el registro y no afectará la producción acumulada de la colmena ni ninguna otra información.');" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Quitar</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>

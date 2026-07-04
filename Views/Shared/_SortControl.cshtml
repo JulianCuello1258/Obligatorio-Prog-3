@@ -1,0 +1,26 @@
+@* _SortControl.cshtml — parameters: sortBy (string), descending (bool), options (List<(string Value, string Label)>) *@
+@{
+    var currentSortBy = (string)(ViewBag.SortBy ?? "");
+    var currentDesc = (bool)(ViewBag.Descending ?? false);
+    // Build the toggle URL preserving all current query params except descending
+    var toggleDesc = !currentDesc;
+}
+
+<form method="get" class="sort-control">
+    @* Preserve extra querystring params (e.g. apiarioId) via hidden inputs *@
+    @foreach (var key in Context.Request.Query.Keys.Where(k => k != "sortBy" && k != "descending"))
+    {
+        <input type="hidden" name="@key" value="@Context.Request.Query[key]" />
+    }
+    <span class="sort-label">Ordenar por:</span>
+    <select name="sortBy" onchange="this.form.submit()">
+        @foreach (var opt in (IEnumerable<(string Value, string Label)>)ViewBag.SortOptions)
+        {
+            <option value="@opt.Value" selected="@(currentSortBy == opt.Value)">@opt.Label</option>
+        }
+    </select>
+    <a href="?sortBy=@currentSortBy&descending=@toggleDesc.ToString().ToLower()@(Context.Request.Query.Where(q => q.Key != "sortBy" && q.Key != "descending").Select(q => $"&{q.Key}={q.Value}").DefaultIfEmpty("").Aggregate((a, b) => a + b))"
+       class="sort-dir-btn" title="Invertir orden">
+        @(currentDesc ? "▲" : "▼")
+    </a>
+</form>

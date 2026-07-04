@@ -10,6 +10,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
+
+    <!-- ===== TOAST NOTIFICATION AREA ===== -->
+    <div id="toast-container" aria-live="polite" aria-atomic="true"
+         style="position: fixed; top: 1.25rem; right: 1.25rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.6rem; min-width: 300px; max-width: 380px;">
+    </div>
     <div class="sidebar">
         <h2 class="mb-4"><img src="/Images/logo.png" width="30" /> Sanganos S.A.</h2>
         <nav>
@@ -22,9 +27,9 @@
                 <li><a href="/Produccion" class="@(controller == "Produccion" ? "active" : "")"><img src="/Images/Estadisticas.png" /> Producción</a></li>
                 <li><a href="/Export/Exportaciones" class="@(controller == "Export" ? "active" : "")"><img src="/Images/exportacion.png" /> Exportación</a></li>
                 <li><a href="/Trashumancia" class="@(controller == "Trashumancia" ? "active" : "")"><img src="/Images/apiarios.png" /> Trashumancia</a></li>
-                <li><a href="/Mapa" class="@(controller == "Mapa" ? "active" : "")"><img src="/Images/marcador-de-mapa.png" /> Mapa</a></li>
                 <li><a href="/Tareas" class="@(controller == "Tareas" ? "active" : "")"><img src="/Images/comprobacion-de-lista.png" /> Tareas</a></li>
-                <li class="mt-5"><a href="/Account/Logout" class="text-danger"><img src="/Images/editar-oscuro.png" /> Cerrar Sesión</a></li>
+                <li><a href="/Mapa" class="@(controller == "Mapa" ? "active" : "")"><img src="/Images/marcador-de-mapa.png" /> Mapa</a></li>
+                <li><a href="/Account/Logout" class="text-danger"><img src="/Images/editar-oscuro.png" /> Cerrar Sesión</a></li>
             </ul>
         </nav>
     </div>
@@ -60,10 +65,92 @@
 
     <div id="notification-area"></div>
 
+    <!-- Server-side TempData toasts -->
+    @if (TempData["Toast"] != null)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                showToast(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["Toast"]?.ToString())),
+                          @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["ToastType"]?.ToString() ?? "success")));
+            });
+        </script>
+    }
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/animations.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+    /**
+     * showToast(message, type)
+     * type: 'success' | 'danger' | 'warning' | 'info'
+     */
+    function showToast(message, type) {
+        if (!message) return;
+        type = type || 'success';
+
+        const icons = {
+            success: '✅',
+            danger:  '❌',
+            warning: '⚠️',
+            info:    'ℹ️'
+        };
+        const colors = {
+            success: { bg: 'linear-gradient(135deg,#1a7a4a,#25a668)', border: '#1a7a4a', text: '#fff' },
+            danger:  { bg: 'linear-gradient(135deg,#c0392b,#e74c3c)', border: '#c0392b', text: '#fff' },
+            warning: { bg: 'linear-gradient(135deg,#d68910,#f39c12)', border: '#d68910', text: '#fff' },
+            info:    { bg: 'linear-gradient(135deg,#1a5276,#2980b9)', border: '#1a5276', text: '#fff' }
+        };
+        const style = colors[type] || colors.success;
+        const icon  = icons[type]  || icons.success;
+
+        const toast = document.createElement('div');
+        toast.setAttribute('role', 'alert');
+        toast.style.cssText = [
+            'display:flex', 'align-items:center', 'gap:0.75rem',
+            'padding:0.85rem 1.1rem',
+            'border-radius:12px',
+            'box-shadow:0 8px 24px rgba(0,0,0,0.18)',
+            'background:' + style.bg,
+            'color:' + style.text,
+            'font-family:Outfit,sans-serif',
+            'font-size:0.88rem',
+            'font-weight:500',
+            'border-left:4px solid ' + style.border,
+            'opacity:0',
+            'transform:translateX(40px)',
+            'transition:opacity 0.35s ease, transform 0.35s ease',
+            'pointer-events:auto',
+            'cursor:pointer'
+        ].join(';');
+
+        toast.innerHTML = `
+            <span style="font-size:1.2rem;flex-shrink:0">${icon}</span>
+            <span style="flex:1;line-height:1.4">${message}</span>
+            <button onclick="this.closest('[role=alert]').remove()" style="background:none;border:none;color:inherit;font-size:1.1rem;opacity:0.7;cursor:pointer;padding:0;line-height:1" title="Cerrar">✕</button>
+        `;
+
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        container.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                toast.style.opacity  = '1';
+                toast.style.transform = 'translateX(0)';
+            });
+        });
+
+        // Auto dismiss after 4.5s
+        setTimeout(() => {
+            toast.style.opacity   = '0';
+            toast.style.transform = 'translateX(40px)';
+            setTimeout(() => toast.remove(), 380);
+        }, 4500);
+    }
+    </script>
 </body>
 </html>

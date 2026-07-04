@@ -4,74 +4,150 @@
     ViewData["Title"] = "Nueva Colmena";
 }
 
+
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="glass-card">
-            <h2 class="h4 mb-4">Registrar Nueva Colmena</h2>
-            <form asp-action="Create">
-                <div class="mb-3">
-                    <label asp-for="ApiarioId" class="form-label">Apiario</label>
-                    <select asp-for="ApiarioId" class="form-select" asp-items="ViewBag.ApiarioId"></select>
+            <form asp-action="Create" id="createColmenaForm">
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Error:</strong> Por favor, verifique los campos del formulario.
+                        <button type="button" class="btn-close" data-bs-alert="dismiss" aria-label="Close"></button>
+                    </div>
+                }
+
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label asp-for="ApiarioId" class="form-label fw-bold">Apiario</label>
+                        <select asp-for="ApiarioId" class="form-select" asp-items="ViewBag.ApiarioId">
+                            <option value="">-- Seleccionar Apiario --</option>
+                        </select>
+                        <span asp-validation-for="ApiarioId" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="Cantidad" class="form-label fw-bold">Cantidad de Colmenas</label>
+                        <input type="number" id="Cantidad" name="cantidad" class="form-control" value="1" min="1" max="500" />
+                        <div class="form-text text-muted">Registrar múltiples colmenas con los mismos datos.</div>
+                    </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label asp-for="Tipo" class="form-label">Tipo de Colmena</label>
-                        <input asp-for="Tipo" class="form-control" placeholder="Ej: Langstroth" required />
+                        <label asp-for="Tipo" class="form-label fw-bold">Tipo de Colmena</label>
+                        <select asp-for="Tipo" class="form-select">
+                            <option value="">-- Seleccionar Tipo --</option>
+                            <option value="Langstroth">Langstroth</option>
+                            <option value="Dadant">Dadant</option>
+                            <option value="Jumbo">Jumbo</option>
+                            <option value="Otra">Otra</option>
+                        </select>
+                        <span asp-validation-for="Tipo" class="text-danger small"></span>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label asp-for="Estado" class="form-label">Estado Inicial</label>
-                        <select asp-for="Estado" class="form-select" asp-items="Html.GetEnumSelectList<BeeKeeperApp.Models.Entities.EstadoColmena>()"></select>
+                        <label asp-for="Estado" class="form-label fw-bold">Estado Inicial</label>
+                        <select asp-for="Estado" class="form-select">
+                            <option value="">-- Seleccionar Estado --</option>
+                            <option value="Activa">Activa</option>
+                            <option value="Inactiva">Inactiva</option>
+                        </select>
+                        <span asp-validation-for="Estado" class="text-danger small"></span>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label asp-for="Poblacion" class="form-label">Población / Fuerza</label>
+                        <label asp-for="Poblacion" class="form-label fw-bold">Población / Fuerza</label>
                         <select asp-for="Poblacion" class="form-select">
-                            <option>Fuerte</option>
-                            <option>Media</option>
-                            <option>Débil</option>
+                            <option value="">-- Seleccionar Población --</option>
+                            <option value="Fuerte">Fuerte</option>
+                            <option value="Media">Media</option>
+                            <option value="Debil">Débil</option>
                         </select>
+                        <span asp-validation-for="Poblacion" class="text-danger small"></span>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label asp-for="Temperamento" class="form-label">Temperamento</label>
+                        <label asp-for="Temperamento" class="form-label fw-bold">Temperamento</label>
                         <select asp-for="Temperamento" class="form-select">
-                            <option>Mansa</option>
-                            <option>Normal</option>
-                            <option>Agresiva</option>
+                            <option value="">-- Seleccionar Temperamento --</option>
+                            <option value="Mansa">Mansa</option>
+                            <option value="Agresiva">Agresiva</option>
                         </select>
+                        <span asp-validation-for="Temperamento" class="text-danger small"></span>
                     </div>
                 </div>
 
                 <hr class="mt-4 mb-4" />
-                <h5 class="mb-3 text-honey-dark">Información de la Reina</h5>
-                <div class="row">
+                <h5 class="mb-3 text-honey-dark fw-bold">Información de la Reina</h5>
+                <div class="row align-items-end">
                     <div class="col-md-4 mb-3 d-flex align-items-center">
                         <div class="form-check mt-4">
-                            <input asp-for="Reina.Presencia" class="form-check-input" type="checkbox" checked />
-                            <label class="form-check-label">Reina Presente</label>
+                            <input asp-for="Reina.Presencia" id="reinaPresencia" class="form-check-input" type="checkbox" checked />
+                            <label class="form-check-label fw-bold">Reina Presente</label>
                         </div>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <label asp-for="Reina.Salud" class="form-label">Estado de Salud</label>
-                        <select asp-for="Reina.Salud" class="form-select">
+                    <div class="col-md-4 mb-3" id="saludReinaGroup">
+                        <label asp-for="Reina.Salud" class="form-label fw-bold">Estado de Salud</label>
+                        <select asp-for="Reina.Salud" id="reinaSalud" class="form-select">
+                            <option value="">-- Seleccionar Salud --</option>
                             <option value="Buena">Buena</option>
                             <option value="Regular">Regular</option>
                             <option value="Mala">Mala</option>
                         </select>
+                        <span asp-validation-for="Reina.Salud" class="text-danger small"></span>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <label asp-for="Reina.FechaNacimiento" class="form-label">Fecha de Nacimiento</label>
-                        <input asp-for="Reina.FechaNacimiento" class="form-control" type="date" />
+                    <div class="col-md-4 mb-3" id="fechaNacimientoGroup">
+                        <label asp-for="Reina.FechaNacimiento" class="form-label fw-bold">Fecha de Nacimiento</label>
+                        <input asp-for="Reina.FechaNacimiento" id="reinaFechaNacimiento" class="form-control" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="Reina.FechaNacimiento" class="text-danger small"></span>
                     </div>
                 </div>
 
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-honey w-100">Guardar Colmena</button>
-                    <a asp-action="Index" class="btn btn-link w-100 mt-2">Volver</a>
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Guardar Colmenas</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+    (function () {
+        const reinaCheckbox = document.getElementById('reinaPresencia');
+        const saludGroup    = document.getElementById('saludReinaGroup');
+        const fechaGroup    = document.getElementById('fechaNacimientoGroup');
+        const saludSelect   = document.getElementById('reinaSalud');
+        const fechaInput    = document.getElementById('reinaFechaNacimiento');
+        const cantidadInput = document.getElementById('Cantidad');
+        const submitBtn     = document.getElementById('submitBtn');
+
+        function toggleReinaFields() {
+            const presente = reinaCheckbox.checked;
+            saludGroup.style.opacity  = presente ? '1' : '0.4';
+            fechaGroup.style.opacity  = presente ? '1' : '0.4';
+            saludSelect.disabled      = !presente;
+            fechaInput.disabled       = !presente;
+            if (!presente) {
+                saludSelect.value = '';
+                fechaInput.value  = '';
+            }
+        }
+
+        function updateSubmitLabel() {
+            const qty = parseInt(cantidadInput.value, 10);
+            submitBtn.textContent = (qty > 1)
+                ? `Guardar ${qty} Colmenas`
+                : 'Guardar Colmena';
+        }
+
+        reinaCheckbox.addEventListener('change', toggleReinaFields);
+        cantidadInput.addEventListener('input', updateSubmitLabel);
+
+        // Run on page load
+        toggleReinaFields();
+        updateSubmitLabel();
+    })();
+</script>
+}

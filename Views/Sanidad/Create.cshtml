@@ -7,54 +7,84 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="glass-card">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="h4">Nueva Revisión</h2>
+            <div class="d-flex justify-content-end mb-4">
                 <button type="button" id="start-voice" class="btn btn-outline-dark">
                     🎤 Dictar Datos
                 </button>
             </div>
 
-            <form asp-action="Create">
+            <form asp-action="Create" id="formInspeccion">
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Error:</strong> Por favor, verifique los campos del formulario.
+                        <button type="button" class="btn-close" data-bs-alert="dismiss" aria-label="Close"></button>
+                    </div>
+                }
+
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Apiario</label>
-                        <select id="ApiarioId" class="form-select" asp-items="ViewBag.ApiarioId">
+                        <label asp-for="ApiarioId" class="form-label fw-bold">Apiario</label>
+                        <select id="ApiarioId" asp-for="ApiarioId" class="form-select" asp-items="ViewBag.ApiarioId" required>
                             <option value="">-- Seleccione un Apiario --</option>
                         </select>
+                        <span asp-validation-for="ApiarioId" class="text-danger small"></span>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label asp-for="ColmenaId" class="form-label">Colmena</label>
-                        <select asp-for="ColmenaId" class="form-select">
-                            <option value="">-- Seleccione una Colmena --</option>
+                        <label asp-for="ColmenaId" class="form-label fw-bold">Colmena (Opcional)</label>
+                        <select id="ColmenaId" asp-for="ColmenaId" class="form-select">
+                            <option value="">-- Seleccione un Apiario primero --</option>
                         </select>
+                        <span asp-validation-for="ColmenaId" class="text-danger small"></span>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Fecha" class="form-label">Fecha</label>
-                        <input asp-for="Fecha" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Enfermedades" class="form-label">Enfermedades Detectadas</label>
-                    <input asp-for="Enfermedades" id="field-enfermedades" class="form-control" placeholder="Ej: Varroasis" />
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label asp-for="Tratamiento" class="form-label">Tratamiento</label>
-                        <input asp-for="Tratamiento" id="field-tratamiento" class="form-control" />
+                        <label asp-for="Fecha" class="form-label fw-bold">Fecha</label>
+                        <input asp-for="Fecha" id="Fecha" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" max="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                        <span asp-validation-for="Fecha" class="text-danger small"></span>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label asp-for="ProximaDosis" class="form-label">Fecha Próxima Dosis</label>
-                        <input asp-for="ProximaDosis" class="form-control" type="date" />
+                        <label class="form-label fw-bold">Enfermedades Detectadas</label>
+                        <select id="select-enfermedades" class="form-select mb-2">
+                            <option value="">-- Seleccionar Enfermedad --</option>
+                            @foreach (var enf in (ViewBag.Enfermedades as List<string>) ?? new List<string>())
+                            {
+                                <option value="@enf">@enf</option>
+                            }
+                            <option value="Otro">Otro (Especificar)</option>
+                        </select>
+                        <input asp-for="Enfermedades" id="field-enfermedades" class="form-control" placeholder="Ej: Varroasis" style="display:none;" />
+                        <span asp-validation-for="Enfermedades" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Tratamiento</label>
+                        <select id="select-tratamiento" class="form-select mb-2">
+                            <option value="">-- Seleccionar Tratamiento --</option>
+                            @foreach (var trat in (ViewBag.Tratamientos as List<string>) ?? new List<string>())
+                            {
+                                <option value="@trat">@trat</option>
+                            }
+                            <option value="Otro">Otro (Especificar)</option>
+                        </select>
+                        <input asp-for="Tratamiento" id="field-tratamiento" class="form-control" placeholder="Ej: Ácido Oxálico" style="display:none;" />
+                        <span asp-validation-for="Tratamiento" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ProximaDosis" class="form-label fw-bold">Fecha Próxima Dosis</label>
+                        <input asp-for="ProximaDosis" id="ProximaDosis" class="form-control" type="date" />
+                        <span asp-validation-for="ProximaDosis" class="text-danger small"></span>
                     </div>
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Observaciones" class="form-label">Observaciones</label>
-                    <textarea asp-for="Observaciones" id="field-observaciones" class="form-control" rows="3"></textarea>
+                    <label asp-for="Observaciones" class="form-label fw-bold">Observaciones</label>
+                    <textarea asp-for="Observaciones" id="field-observaciones" class="form-control" rows="3" placeholder="Ej: Todo en orden, presencia de cría sana o aplicar tratamiento..."></textarea>
+                    <span asp-validation-for="Observaciones" class="text-danger small"></span>
                 </div>
 
                 <hr />
@@ -63,20 +93,20 @@
                     <div class="col-md-4 mb-3">
                         <div class="form-check">
                             <input asp-for="ReinaPresente" class="form-check-input" type="checkbox" checked />
-                            <label class="form-check-label">Reina Presente</label>
+                            <label class="form-check-label fw-bold">Reina Presente</label>
                         </div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <div class="form-check">
                             <input asp-for="HayCrias" class="form-check-input" type="checkbox" checked />
-                            <label class="form-check-label">Hay Crías</label>
+                            <label class="form-check-label fw-bold">Hay Crías</label>
                         </div>
                     </div>
                 </div>
 
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-honey w-100">Guardar Inspección</button>
-                    <a asp-action="Index" class="btn btn-link w-100 mt-2">Cancelar</a>
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Guardar Inspección</button>
                 </div>
             </form>
         </div>
@@ -87,26 +117,113 @@
     <script src="~/js/voiceTranscription.js"></script>
     <script>
         $(document).ready(function() {
+            var $apiarioSelect = $('#ApiarioId');
+            var $colmenaSelect = $('#ColmenaId');
+            var originalColmenaId = '@Model?.ColmenaId';
+
             // Cargar colmenas al cambiar apiario
-            $('#ApiarioId').change(function() {
+            $apiarioSelect.change(function() {
                 var apiarioId = $(this).val();
-                var $colmenaSelect = $('#ColmenaId');
                 $colmenaSelect.empty();
-                $colmenaSelect.append('<option value="">-- Seleccione una Colmena --</option>');
                 if (apiarioId) {
+                    $colmenaSelect.append('<option value="">-- Seleccione una Colmena --</option>');
                     $.get('/Sanidad/GetColmenasByApiario', { apiarioId: apiarioId }, function(data) {
                         data.forEach(function(item) {
-                            $colmenaSelect.append('<option value="' + item.id + '">Colmena #' + item.id + '</option>');
+                            var selectedAttr = (originalColmenaId && item.id == originalColmenaId) ? ' selected' : '';
+                            $colmenaSelect.append('<option value="' + item.id + '"' + selectedAttr + '>Colmena #' + item.id + '</option>');
                         });
                     });
+                } else {
+                    $colmenaSelect.append('<option value="">-- Seleccione un Apiario primero --</option>');
                 }
             });
+
+            // Si hay un apiario preseleccionado
+            if ($apiarioSelect.val()) {
+                $apiarioSelect.trigger('change');
+            }
+
+            // Lógica para Enfermedades dropdown + "Otro"
+            $('#select-enfermedades').change(function() {
+                var val = $(this).val();
+                if (val === 'Otro') {
+                    $('#field-enfermedades').val('').show().focus().prop('required', true);
+                } else {
+                    $('#field-enfermedades').val(val).hide().prop('required', false);
+                }
+            });
+
+            // Lógica para Tratamiento dropdown + "Otro"
+            $('#select-tratamiento').change(function() {
+                var val = $(this).val();
+                if (val === 'Otro') {
+                    $('#field-tratamiento').val('').show().focus().prop('required', true);
+                } else {
+                    $('#field-tratamiento').val(val).hide().prop('required', false);
+                }
+                updateTratamientoValidation();
+            });
+
+            $('#field-tratamiento').on('input', function() {
+                updateTratamientoValidation();
+            });
+
+            function updateTratamientoValidation() {
+                var treatmentVal = $('#select-tratamiento').val();
+                var treatmentText = $('#field-tratamiento').val();
+                var hasTreatment = (treatmentVal && treatmentVal !== 'Ninguno') || (treatmentVal === 'Otro' && treatmentText);
+                var $proximaDosis = $('#ProximaDosis');
+
+                if (hasTreatment) {
+                    $proximaDosis.prop('required', true);
+                    $proximaDosis.prop('disabled', false);
+                    
+                    // Configurar fecha mínima a mañana
+                    var tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    var tomorrowStr = tomorrow.toISOString().split('T')[0];
+                    $proximaDosis.attr('min', tomorrowStr);
+                } else {
+                    $proximaDosis.prop('required', false);
+                    $proximaDosis.val('');
+                    $proximaDosis.prop('disabled', true);
+                }
+            }
+
+            // Inicializar selects si ya tienen valores cargados (por ejemplo, tras un error de validación)
+            var currentEnf = $('#field-enfermedades').val();
+            if (currentEnf) {
+                var existsEnf = false;
+                $('#select-enfermedades option').each(function() {
+                    if (this.value === currentEnf) existsEnf = true;
+                });
+                if (existsEnf) {
+                    $('#select-enfermedades').val(currentEnf);
+                } else if (currentEnf !== '') {
+                    $('#select-enfermedades').val('Otro');
+                    $('#field-enfermedades').show().prop('required', true);
+                }
+            }
+
+            var currentTrat = $('#field-tratamiento').val();
+            if (currentTrat) {
+                var existsTrat = false;
+                $('#select-tratamiento option').each(function() {
+                    if (this.value === currentTrat) existsTrat = true;
+                });
+                if (existsTrat) {
+                    $('#select-tratamiento').val(currentTrat);
+                } else if (currentTrat !== '') {
+                    $('#select-tratamiento').val('Otro');
+                    $('#field-tratamiento').show().prop('required', true);
+                }
+            }
+            updateTratamientoValidation();
 
             // Preparar transcripción
             let textoPrevio = "";
 
             window.onInterim = function(text) {
-                // Muestra el texto en vivo en observaciones
                 if (textoPrevio.trim() !== '') {
                     $('#field-observaciones').val(textoPrevio + '\n' + text);
                 } else {
@@ -117,7 +234,7 @@
             if (VoiceTranscription.init(onVoiceResult)) {
                 $('#start-voice').click(function() {
                     if (VoiceTranscription.isListening) {
-                        VoiceTranscription.stop(); // Esto llama a onVoiceResult automáticamente
+                        VoiceTranscription.stop();
                         $(this).text('🎤 Dictar Datos').removeClass('btn-danger').addClass('btn-outline-dark');
                     } else {
                         textoPrevio = $('#field-observaciones').val();

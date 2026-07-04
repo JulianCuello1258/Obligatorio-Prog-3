@@ -1,1 +1,37 @@
+## .NET / ASP.NET Core
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Visual Studio
 .vs/
+.vscode/
+
+## Publish / Build Artifacts
+[Pp]ublish/
+[Rr]elease/
+[Dd]ebug/
+
+## Logs & temp files
+*.log
+out.log
+*.tmp
+
+## Secrets & Sensitive Configuration
+appsettings.Production.json
+appsettings.*.local.json
+secrets.json
+
+## User Secrets (dotnet user-secrets)
+# Note: user secrets are stored in %APPDATA%\Microsoft\UserSecrets and NOT committed
+
+## NuGet
+*.nupkg
+.nuget/
+
+## OS generated
+.DS_Store
+Thumbs.db

@@ -11,6 +11,11 @@ namespace BeeKeeperApp.Models.Entities
         public int ApiarioDestinoId { get; set; }
         public DateTime Fecha { get; set; } = DateTime.UtcNow;
         public double DistanciaKm { get; set; }
+        [Required]
+        public int ColmenaId { get; set; }
+        [ForeignKey("ColmenaId")]
+        public Colmena? Colmena { get; set; }
+
         [ForeignKey("ApiarioOrigenId")]
         public Apiario? ApiarioOrigen { get; set; }
         [ForeignKey("ApiarioDestinoId")]

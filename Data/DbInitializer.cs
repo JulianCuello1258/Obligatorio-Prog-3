@@ -80,7 +80,7 @@ namespace BeeKeeperApp.Data
 
             var trashumancias = new Trashumancia[]
             {
-                new Trashumancia { ApiarioOrigenId = apiarioSurId, ApiarioDestinoId = apiarios[2].Id, Fecha = DateTime.UtcNow.AddDays(-60), DistanciaKm = 45.5 }
+                new Trashumancia { ApiarioOrigenId = apiarioSurId, ApiarioDestinoId = apiarios[2].Id, ColmenaId = colmenas[3].Id, Fecha = DateTime.UtcNow.AddDays(-60), DistanciaKm = 45.5 }
             };
             context.Trashumancias.AddRange(trashumancias);
             context.SaveChanges();

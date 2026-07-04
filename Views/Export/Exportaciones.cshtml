@@ -4,9 +4,21 @@
     ViewData["Title"] = "Exportaciones de Miel";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Exportaciones de Miel</h2>
-    <a asp-action="CreateExportacion" class="btn btn-honey">+ Nueva Exportación</a>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <a asp-action="CreateExportacion" class="btn btn-honey">+ Nueva Exportación</a>
+    </div>
+    <form method="get" class="sort-control">
+        <span class="sort-label">Ordenar por:</span>
+        <select name="sortBy" onchange="this.form.submit()">
+            <option value="Fecha" selected="@(ViewBag.SortBy == "Fecha")">Fecha</option>
+            <option value="Destino" selected="@(ViewBag.SortBy == "Destino")">Destino</option>
+            <option value="Cantidad" selected="@(ViewBag.SortBy == "Cantidad")">Cantidad (Barriles)</option>
+        </select>
+        <a href="?sortBy=@ViewBag.SortBy&descending=@((!ViewBag.Descending).ToString().ToLower())" class="sort-dir-btn" title="Cambiar dirección de orden">
+            @(ViewBag.Descending == true ? "▲" : "▼")
+        </a>
+    </form>
 </div>
 
 <div class="card shadow-sm border-0">
@@ -21,13 +33,14 @@
         else
         {
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover table-custom align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Fecha</th>
-                            <th>Destino</th>
-                            <th class="text-center">Cantidad (Barriles)</th>
-                            <th class="text-end">Volumen Estimado (Kg)</th>
+                            <th class="text-nowrap">Fecha</th>
+                            <th class="text-nowrap">Destino</th>
+                            <th class="text-nowrap text-center">Cantidad (Barriles)</th>
+                            <th class="text-nowrap text-end">Volumen Estimado (Kg)</th>
+                            <th class="text-nowrap text-end">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -44,14 +57,20 @@
                                 <td class="text-end fw-bold text-primary">
                                     @(item.CantidadBarriles * 300) Kg
                                 </td>
+                                <td class="text-end">
+                                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('¿Está seguro de que desea quitar esta exportación? Esta acción solo eliminará el registro.');" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Quitar</button>
+                                    </form>
+                                </td>
                             </tr>
                         }
                     </tbody>
                     <tfoot class="table-light fw-bold">
                         <tr>
-                            <td colspan="2">Total General</td>
+                            <td colspan="3">Total General</td>
                             <td class="text-center">@Model.Sum(m => m.CantidadBarriles) barriles</td>
                             <td class="text-end">@(Model.Sum(m => m.CantidadBarriles) * 300) Kg</td>
+                            <td></td>
                         </tr>
                     </tfoot>
                 </table>

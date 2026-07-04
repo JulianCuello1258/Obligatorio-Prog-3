@@ -7,8 +7,8 @@ namespace BeeKeeperApp.Models.Entities
     {
         [Key]
         public int Id { get; set; }
-        [Required]
-        public int ColmenaId { get; set; }
+        public int? ApiarioId { get; set; }
+        public int? ColmenaId { get; set; }
         public DateTime Fecha { get; set; } = DateTime.UtcNow;
         [Required]
         public TipoRevision Tipo { get; set; } = TipoRevision.Rutinaria;
@@ -30,5 +30,7 @@ namespace BeeKeeperApp.Models.Entities
         public Clima? CondicionesClimaticas { get; set; }
         [ForeignKey("ColmenaId")]
         public Colmena? Colmena { get; set; }
+        [ForeignKey("ApiarioId")]
+        public Apiario? Apiario { get; set; }
     }
 }

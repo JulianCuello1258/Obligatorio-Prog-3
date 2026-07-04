@@ -4,54 +4,87 @@
     ViewData["Title"] = "Gestión de Colmenas";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <p>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
         <a asp-action="Create" class="btn btn-honey">+ Nueva Colmena</a>
-    </p>
+    </div>
+    <form method="get" class="sort-control">
+        @if (ViewBag.SelectedApiarioId != null)
+        {
+            <input type="hidden" name="apiarioId" value="@ViewBag.SelectedApiarioId" />
+        }
+        <span class="sort-label">Ordenar por:</span>
+        <select name="sortBy" onchange="this.form.submit()">
+            <option value="Id" selected="@(ViewBag.SortBy == "Id")">ID</option>
+            <option value="Fecha" selected="@(ViewBag.SortBy == "Fecha")">Fecha Creación</option>
+            <option value="Produccion" selected="@(ViewBag.SortBy == "Produccion")">Producido</option>
+            <option value="Poblacion" selected="@(ViewBag.SortBy == "Poblacion")">Población</option>
+            <option value="Tipo" selected="@(ViewBag.SortBy == "Tipo")">Tipo</option>
+        </select>
+        <a href="?sortBy=@ViewBag.SortBy&descending=@((!ViewBag.Descending).ToString().ToLower())@(ViewBag.SelectedApiarioId != null ? $"&apiarioId={ViewBag.SelectedApiarioId}" : "")" class="sort-dir-btn" title="Cambiar dirección de orden">
+            @(ViewBag.Descending == true ? "▲" : "▼")
+        </a>
+    </form>
 </div>
 
 <div class="glass-card">
-    <table class="table table-custom">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Apiario</th>
-                <th>Estado</th>
-                <th>Tipo</th>
-                <th>Población</th>
-                <th>Reina</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model) {
+    <div class="table-responsive">
+        <table class="table table-custom align-middle">
+            <thead>
                 <tr>
-                    <td>#@item.Id</td>
-                    <td>
-                        @if(item.ApiarioId > 0) {
-                            <a href="/Apiarios/Details/@item.ApiarioId" class="text-decoration-none fw-bold text-dark hover-honey">@item.Apiario?.Nombre</a>
-                        } else {
-                            <span class="text-muted">Sin asignar</span>
-                        }
-                    </td>
-                    <td>
-                        <span class="badge @(item.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Activa ? "bg-success" : "bg-danger")">
-                            @item.Estado
-                        </span>
-                    </td>
-                    <td>@item.Tipo</td>
-                    <td>@item.Poblacion</td>
-                    <td>
-                        @(item.Reina?.Presencia == true ? $"✅ Presente (ID: {item.Reina.ColmenaId})" : "❌ Ausente")
-                    </td>
-                    <td>
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark">Detalles</a>
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Editar</a>
-                    </td>
+                    <th class="text-nowrap">ID</th>
+                    <th class="text-nowrap">Apiario</th>
+                    <th class="text-nowrap">Estado</th>
+                    <th class="text-nowrap">Tipo</th>
+                    <th class="text-nowrap">Población</th>
+                    <th class="text-nowrap">Reina</th>
+                    <th class="text-nowrap">Fecha Creación</th>
+                    <th class="text-nowrap">Producido</th>
+                    <th class="text-nowrap text-end">Acciones</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var item in Model) {
+                    <tr>
+                        <td class="text-nowrap">#@item.Id</td>
+                        <td class="text-nowrap">
+                            @if(item.ApiarioId > 0) {
+                                <a href="/Apiarios/Details/@item.ApiarioId" class="text-decoration-none fw-bold text-dark hover-honey">@item.Apiario?.Nombre</a>
+                            } else {
+                                <span class="text-muted">Sin asignar</span>
+                            }
+                        </td>
+                        <td class="text-nowrap">
+                            @if (item.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Activa)
+                            {
+                                <span class="badge bg-success">Activa</span>
+                            }
+                            else if (item.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Inactiva)
+                            {
+                                <span class="badge bg-secondary">Inactiva</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Perdida</span>
+                            }
+                        </td>
+                        <td class="text-nowrap">@item.Tipo</td>
+                        <td class="text-nowrap">@(item.Poblacion?.ToString() ?? "-")</td>
+                        <td class="text-nowrap">
+                            @(item.Reina?.Presencia == true ? $"✅ Presente" : "❌ Ausente")
+                        </td>
+                        <td class="text-nowrap">@item.FechaCreacion.ToString("dd/MM/yyyy")</td>
+                        <td class="text-nowrap fw-bold text-honey-dark">@item.Extracciones.Sum(e => e.CantidadKg).ToString("N1") Kg</td>
+                        <td class="text-nowrap text-end">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark">Detalles</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
 
 @if (!Model.Any()) {

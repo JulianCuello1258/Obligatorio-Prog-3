@@ -29,23 +29,31 @@ namespace BeeKeeperApp.Controllers
         }
 
         // GET: Apiarios
-        public async Task<IActionResult> Index(string sortOrder)
+        public async Task<IActionResult> Index(string sortBy = "Nombre", bool descending = false)
         {
-            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
-            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+            ViewBag.SortBy = sortBy;
+            ViewBag.Descending = descending;
 
-            var apiarios = from a in _context.Apiarios.Include(a => a.Colmenas)
-                           select a;
+            // Load everything first, then sort in memory (avoids EF translation errors with SelectMany/Sum)
+            var apiarios = await _context.Apiarios
+                .Include(a => a.Colmenas)
+                    .ThenInclude(c => c.Extracciones)
+                .ToListAsync();
 
-            apiarios = sortOrder switch
+            apiarios = sortBy switch
             {
-                "name_desc" => apiarios.OrderByDescending(s => s.Nombre),
-                "Date" => apiarios.OrderBy(s => s.Id), // Usando Id como proxy de fecha si no hay fecha
-                "date_desc" => apiarios.OrderByDescending(s => s.Id),
-                _ => apiarios.OrderBy(s => s.Nombre),
+                "Fecha"     => descending ? apiarios.OrderByDescending(s => s.Id).ToList()
+                                          : apiarios.OrderBy(s => s.Id).ToList(),
+                "Produccion" => descending
+                                ? apiarios.OrderByDescending(s => s.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg)).ToList()
+                                : apiarios.OrderBy(s => s.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg)).ToList(),
+                "Nombre"    => descending ? apiarios.OrderByDescending(s => s.Nombre).ToList()
+                                          : apiarios.OrderBy(s => s.Nombre).ToList(),
+                _           => descending ? apiarios.OrderByDescending(s => s.Nombre).ToList()
+                                          : apiarios.OrderBy(s => s.Nombre).ToList()
             };
 
-            return View(await apiarios.ToListAsync());
+            return View(apiarios);
         }
 
         // GET: Apiarios/Details/5
@@ -55,6 +63,7 @@ namespace BeeKeeperApp.Controllers
 
             var apiario = await _context.Apiarios
                 .Include(a => a.Colmenas)
+                    .ThenInclude(c => c.Extracciones)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (apiario == null) return NotFound();
@@ -76,6 +85,8 @@ namespace BeeKeeperApp.Controllers
             {
                 _context.Add(apiario);
                 await _context.SaveChangesAsync();
+                TempData["Toast"] = $"Apiario '{apiario.Nombre}' registrado correctamente.";
+                TempData["ToastType"] = "success";
                 return RedirectToAction(nameof(Index));
             }
             return View(apiario);
@@ -110,6 +121,8 @@ namespace BeeKeeperApp.Controllers
                     if (!ApiarioExists(apiario.Id)) return NotFound();
                     else throw;
                 }
+                TempData["Toast"] = $"Apiario '{apiario.Nombre}' actualizado correctamente.";
+                TempData["ToastType"] = "info";
                 return RedirectToAction(nameof(Index));
             }
             return View(apiario);
@@ -152,6 +165,8 @@ namespace BeeKeeperApp.Controllers
 
                 _context.Apiarios.Remove(apiario);
                 await _context.SaveChangesAsync();
+                TempData["Toast"] = $"Apiario eliminado correctamente.";
+                TempData["ToastType"] = "danger";
             }
             return RedirectToAction(nameof(Index));
         }

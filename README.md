@@ -1,6 +1,6 @@
-# 🐝 BeeKeeperApp - Sistema de Gestión e Inteligencia Apícola
+# 🐝 Sanganos S.A. - Sistema de Gestión Apícola
 
-¡Bienvenido a **BeeKeeperApp**! Este sistema está diseñado para ayudar al **apicultor Matías Verges** a gestionar sus apiarios, colmenas, reinas, sanidad, producción de miel, tareas de mantenimiento y movimientos de trashumancia. Además, cuenta con un módulo de inteligencia climática y geográfica que evalúa la aptitud de los terrenos para instalar nuevos apiarios utilizando datos satelitales y de OpenStreetMap.
+¡Bienvenido a **Sanganos S.A.**! Este sistema está diseñado para ayudar al **apicultor Matías Verges** a gestionar sus apiarios, colmenas, reinas, sanidad, producción de miel, tareas de mantenimiento y movimientos de trashumancia. Además, cuenta con un módulo de inteligencia climática y geográfica que evalúa la aptitud de los terrenos para instalar nuevos apiarios utilizando datos satelitales y de OpenStreetMap.
 
 Este documento sirve como **guía e índice de archivos** para comprender la estructura del proyecto y saber dónde se gestiona cada función del trabajo diario en el campo.
 

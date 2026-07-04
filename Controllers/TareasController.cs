@@ -15,13 +15,31 @@ namespace BeeKeeperApp.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string sortBy = "Fecha", bool descending = false)
         {
-            var tareas = await _context.Tareas
+            ViewBag.SortBy = sortBy;
+            ViewBag.Descending = descending;
+
+            var query = _context.Tareas
                 .Include(t => t.Colmena)
                 .Include(t => t.Apiario)
-                .OrderBy(t => t.FechaProgramada)
-                .ToListAsync();
+                .AsQueryable();
+
+            switch (sortBy)
+            {
+                case "Titulo":
+                    query = descending ? query.OrderByDescending(t => t.Titulo) : query.OrderBy(t => t.Titulo);
+                    break;
+                case "Estado":
+                    query = descending ? query.OrderByDescending(t => t.Completada) : query.OrderBy(t => t.Completada);
+                    break;
+                case "Fecha":
+                default:
+                    query = descending ? query.OrderByDescending(t => t.FechaProgramada) : query.OrderBy(t => t.FechaProgramada);
+                    break;
+            }
+
+            var tareas = await query.ToListAsync();
             return View(tareas);
         }
 
@@ -40,6 +58,7 @@ namespace BeeKeeperApp.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkCompleted(int id)
         {
             var tarea = await _context.Tareas.FindAsync(id);
@@ -47,6 +66,23 @@ namespace BeeKeeperApp.Controllers
             {
                 tarea.Completada = true;
                 await _context.SaveChangesAsync();
+                TempData["Toast"] = $"Tarea marcada como completada.";
+                TempData["ToastType"] = "success";
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var tarea = await _context.Tareas.FindAsync(id);
+            if (tarea != null)
+            {
+                _context.Tareas.Remove(tarea);
+                await _context.SaveChangesAsync();
+                TempData["Toast"] = "Tarea eliminada correctamente.";
+                TempData["ToastType"] = "danger";
             }
             return RedirectToAction(nameof(Index));
         }
@@ -54,11 +90,12 @@ namespace BeeKeeperApp.Controllers
         public IActionResult Create()
         {
             ViewBag.ApiarioId = new SelectList(_context.Apiarios, "Id", "Nombre");
-            ViewBag.ColmenaId = new SelectList(_context.Colmenas, "Id", "Id");
+            ViewBag.ColmenaId = new SelectList(_context.Colmenas.Where(c => c.Estado != EstadoColmena.Perdida), "Id", "Id");
             return View();
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Tarea tarea)
         {
             if (tarea.FechaProgramada < DateTime.Today)
@@ -70,12 +107,25 @@ namespace BeeKeeperApp.Controllers
             {
                 _context.Add(tarea);
                 await _context.SaveChangesAsync();
+                TempData["Toast"] = "Tarea programada correctamente.";
+                TempData["ToastType"] = "success";
                 return RedirectToAction(nameof(Index));
             }
             ViewBag.ApiarioId = new SelectList(_context.Apiarios, "Id", "Nombre", tarea.ApiarioId);
-            ViewBag.ColmenaId = new SelectList(_context.Colmenas, "Id", "Id", tarea.ColmenaId);
+            ViewBag.ColmenaId = new SelectList(_context.Colmenas.Where(c => c.Estado != EstadoColmena.Perdida), "Id", "Id", tarea.ColmenaId);
             return View(tarea);
         }
+
+        [HttpGet]
+        public async Task<JsonResult> GetColmenasByApiario(int apiarioId)
+        {
+            var colmenas = await _context.Colmenas
+                .Where(c => c.ApiarioId == apiarioId && c.Estado != EstadoColmena.Perdida)
+                .Select(c => new { id = c.Id })
+                .ToListAsync();
+            return Json(colmenas);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetPendingTasks()
         {

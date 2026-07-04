@@ -1,0 +1,38 @@
+@model BeeKeeperApp.Models.Entities.Colmena
+@using BeeKeeperApp.Models.Entities
+
+@{
+    ViewData["Title"] = "Eliminar Colmena";
+    var returnUrl = ViewBag.ReturnUrl as string ?? "/Colmenas";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="glass-card border-danger">
+            <h2 class="text-danger mb-4">⚠️ Eliminar Colmena #@Model.Id</h2>
+            <hr />
+
+            <div class="alert alert-warning mb-4">
+                <strong>Atención:</strong> Esta acción marcará la colmena como <strong>Perdida</strong> de forma permanente, pero conservará todo su historial de revisiones y producción en el sistema.
+            </div>
+
+            <p class="mb-4 text-muted">¿Está seguro de que desea eliminar la colmena <strong>#@Model.Id</strong>
+            @if (Model.Apiario != null)
+            {
+                <span>del apiario <strong>@Model.Apiario.Nombre</strong></span>
+            }
+            ? Esta acción no se puede deshacer.</p>
+
+            <form asp-action="DarDeBaja" method="post">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" name="nuevoEstado" value="@EstadoColmena.Perdida" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                <div class="d-flex justify-content-between">
+                    <a href="@returnUrl" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-danger">Confirmar Eliminación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

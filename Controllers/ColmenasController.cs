@@ -16,16 +16,44 @@ namespace BeeKeeperApp.Controllers
         }
 
         // GET: Colmenas
-        public async Task<IActionResult> Index(int? apiarioId)
+        public async Task<IActionResult> Index(int? apiarioId, string sortBy = "Id", bool descending = false)
         {
+            ViewBag.SortBy = sortBy;
+            ViewBag.Descending = descending;
+            ViewBag.SelectedApiarioId = apiarioId;
+
             var colmenas = _context.Colmenas
                 .Include(c => c.Apiario)
                 .Include(c => c.Reina)
+                .Include(c => c.Extracciones)
                 .AsQueryable();
 
             if (apiarioId.HasValue)
             {
                 colmenas = colmenas.Where(c => c.ApiarioId == apiarioId);
+            }
+
+            switch (sortBy)
+            {
+                case "Fecha":
+                    colmenas = descending ? colmenas.OrderByDescending(c => c.FechaCreacion) : colmenas.OrderBy(c => c.FechaCreacion);
+                    break;
+                case "Produccion":
+                    colmenas = descending ? colmenas.OrderByDescending(c => c.Extracciones.Sum(e => e.CantidadKg)) : colmenas.OrderBy(c => c.Extracciones.Sum(e => e.CantidadKg));
+                    break;
+                case "Poblacion":
+                    // Custom sort: Fuerte(3) > Media(2) > Debil(1)
+                    colmenas = descending
+                        ? colmenas.OrderByDescending(c => c.Poblacion == NivelPoblacion.Fuerte ? 3 : c.Poblacion == NivelPoblacion.Media ? 2 : 1)
+                        : colmenas.OrderBy(c => c.Poblacion == NivelPoblacion.Fuerte ? 3 : c.Poblacion == NivelPoblacion.Media ? 2 : 1);
+                    break;
+                case "Tipo":
+                    colmenas = descending ? colmenas.OrderByDescending(c => c.Tipo) : colmenas.OrderBy(c => c.Tipo);
+                    break;
+                case "Id":
+                default:
+                    colmenas = descending ? colmenas.OrderByDescending(c => c.Id) : colmenas.OrderBy(c => c.Id);
+                    break;
             }
 
             return View(await colmenas.ToListAsync());
@@ -57,21 +85,83 @@ namespace BeeKeeperApp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ApiarioId,Estado,Tipo,Poblacion,Temperamento,Reina")] Colmena colmena)
+        public async Task<IActionResult> Create([Bind("ApiarioId,Estado,Tipo,Poblacion,Temperamento,Reina")] Colmena colmena, int cantidad = 1)
         {
+            if (colmena.ApiarioId <= 0)
+            {
+                ModelState.AddModelError("ApiarioId", "El apiario es requerido.");
+            }
+            if (string.IsNullOrEmpty(colmena.Tipo))
+            {
+                ModelState.AddModelError("Tipo", "El tipo de colmena es requerido.");
+            }
+            if (colmena.Poblacion == null)
+            {
+                ModelState.AddModelError("Poblacion", "El nivel de población es requerido.");
+            }
+            if (colmena.Temperamento == null)
+            {
+                ModelState.AddModelError("Temperamento", "El temperamento es requerido.");
+            }
+            if (colmena.Estado == EstadoColmena.Perdida)
+            {
+                ModelState.AddModelError("Estado", "El estado inicial debe ser activa o inactiva.");
+            }
+            if (colmena.Reina == null)
+            {
+                ModelState.AddModelError("Reina.Presencia", "Los datos de la reina son requeridos.");
+            }
+            else
+            {
+                if (colmena.Reina.Presencia)
+                {
+                    if (colmena.Reina.FechaNacimiento == null)
+                    {
+                        ModelState.AddModelError("Reina.FechaNacimiento", "La fecha de nacimiento de la reina es requerida.");
+                    }
+                    else if (colmena.Reina.FechaNacimiento.Value.Date > DateTime.Today)
+                    {
+                        ModelState.AddModelError("Reina.FechaNacimiento", "La fecha de nacimiento no puede ser posterior al día de hoy.");
+                    }
+                }
+            }
+
+            if (cantidad < 1) cantidad = 1;
+            if (cantidad > 500) cantidad = 500;
+
             if (ModelState.IsValid)
             {
-                if (colmena.Reina != null)
+                // Prepare the queen data from the submitted colmena
+                bool reinaPresente = colmena.Reina?.Presencia ?? false;
+                SaludReina saludReina = colmena.Reina?.Salud ?? SaludReina.Buena;
+                DateTime? fechaNacReina = reinaPresente ? colmena.Reina!.FechaNacimiento : null;
+
+                for (int i = 0; i < cantidad; i++)
                 {
-                    colmena.Reina.ColmenaId = colmena.Id;
-                }
-                else
-                {
-                    colmena.Reina = new Reina { Presencia = true, Salud = SaludReina.Buena };
+                    var nuevaColmena = new Colmena
+                    {
+                        ApiarioId   = colmena.ApiarioId,
+                        Estado      = colmena.Estado,
+                        Tipo        = colmena.Tipo,
+                        Poblacion   = colmena.Poblacion,
+                        Temperamento = colmena.Temperamento,
+                        FechaCreacion = DateTime.UtcNow,
+                        Reina = new Reina
+                        {
+                            Presencia       = reinaPresente,
+                            Salud           = saludReina,
+                            FechaNacimiento = fechaNacReina
+                        }
+                    };
+                    _context.Add(nuevaColmena);
                 }
 
-                _context.Add(colmena);
                 await _context.SaveChangesAsync();
+
+                TempData["Toast"] = cantidad == 1
+                    ? "Colmena registrada correctamente."
+                    : $"{cantidad} colmenas registradas correctamente.";
+                TempData["ToastType"] = "success";
                 return RedirectToAction(nameof(Index));
             }
             ViewData["ApiarioId"] = new SelectList(_context.Apiarios, "Id", "Nombre", colmena.ApiarioId);
@@ -99,6 +189,14 @@ namespace BeeKeeperApp.Controllers
         {
             if (id != colmena.Id) return NotFound();
 
+            if (colmena.Reina != null && colmena.Reina.Presencia)
+            {
+                if (colmena.Reina.FechaNacimiento != null && colmena.Reina.FechaNacimiento.Value.Date > DateTime.Today)
+                {
+                    ModelState.AddModelError("Reina.FechaNacimiento", "La fecha de nacimiento no puede ser posterior al día de hoy.");
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 try
@@ -116,28 +214,62 @@ namespace BeeKeeperApp.Controllers
                             _context.Add(colmena.Reina);
                         }
                     }
-
-                    _context.Update(colmena);
-                    // EF will throw exception if we track existingReina and then try to update colmena which also has Reina
-                    // So we must detach existing Reina or just update the colmena directly if it handles the relationship
-                    // A safer approach:
-                    // We only modify the existing Reina manually, then detach it.
-                    // Actually, let's keep it simple:
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!_context.Colmenas.Any(e => e.Id == colmena.Id)) return NotFound();
                     else throw;
                 }
-                // Need to clear tracker for simple update
+
                 _context.ChangeTracker.Clear();
                 _context.Update(colmena);
                 await _context.SaveChangesAsync();
-                
+                TempData["Toast"] = $"Colmena #{colmena.Id} actualizada correctamente.";
+                TempData["ToastType"] = "info";
                 return RedirectToAction(nameof(Index));
             }
             ViewData["ApiarioId"] = new SelectList(_context.Apiarios, "Id", "Nombre", colmena.ApiarioId);
             return View(colmena);
+        }
+
+        // GET: Colmenas/DarDeBaja/5
+        public async Task<IActionResult> DarDeBaja(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var colmena = await _context.Colmenas
+                .Include(c => c.Apiario)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (colmena == null) return NotFound();
+
+            // Capture where the user came from so we can return them there after
+            var referer = Request.Headers["Referer"].ToString();
+            ViewBag.ReturnUrl = string.IsNullOrEmpty(referer) ? Url.Action("Index") : referer;
+
+            return View(colmena);
+        }
+
+        // POST: Colmenas/DarDeBaja/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DarDeBaja(int id, EstadoColmena nuevoEstado, string? returnUrl)
+        {
+            var colmena = await _context.Colmenas.FindAsync(id);
+            if (colmena == null) return NotFound();
+
+            colmena.Estado = EstadoColmena.Perdida;
+            _context.Update(colmena);
+            await _context.SaveChangesAsync();
+
+            TempData["Toast"] = $"Colmena #{id} eliminada correctamente.";
+            TempData["ToastType"] = "warning";
+
+            // Return to where the user came from, or fall back to the hive list
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return Redirect(returnUrl);
+
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Colmenas/GestionarReina/5
@@ -165,6 +297,18 @@ namespace BeeKeeperApp.Controllers
         {
             if (id != reina.ColmenaId) return NotFound();
 
+            if (reina.Presencia)
+            {
+                if (reina.FechaNacimiento == null)
+                {
+                    ModelState.AddModelError("FechaNacimiento", "La fecha de nacimiento de la reina es requerida.");
+                }
+                else if (reina.FechaNacimiento.Value.Date > DateTime.Today)
+                {
+                    ModelState.AddModelError("FechaNacimiento", "La fecha de nacimiento no puede ser posterior al día de hoy.");
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 try
@@ -184,6 +328,8 @@ namespace BeeKeeperApp.Controllers
                 {
                     throw;
                 }
+                TempData["Toast"] = "Datos de reina actualizados correctamente.";
+                TempData["ToastType"] = "success";
                 return RedirectToAction(nameof(Details), new { id = reina.ColmenaId });
             }
             

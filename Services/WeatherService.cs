@@ -35,8 +35,9 @@ namespace BeeKeeperApp.Services
                 var archiveTask = GetHistoricalWeatherCachedAsync(latitude, longitude);
                 var osmTask = GetOverpassSurroundingsCachedAsync(latitude, longitude);
                 var dbTask = GetNearbyApiariesAsync(latitude, longitude);
+                var geocodeTask = GetGeocodeInfoCachedAsync(latitude, longitude);
 
-                await Task.WhenAll(forecastTask, archiveTask, osmTask, dbTask);
+                await Task.WhenAll(forecastTask, archiveTask, osmTask, dbTask, geocodeTask);
 
                 var forecast = await forecastTask;
                 if (forecast == null)
@@ -47,9 +48,10 @@ namespace BeeKeeperApp.Services
                 var archive = await archiveTask;
                 var osm = await osmTask;
                 var nearbyApiaries = await dbTask;
+                var geocode = await geocodeTask;
 
                 // Evaluate the component scores
-                var dto = ProcessSuitability(latitude, longitude, forecast, archive, osm, nearbyApiaries);
+                var dto = ProcessSuitability(latitude, longitude, forecast, archive, osm, nearbyApiaries, geocode);
                 return dto;
             }
             catch (Exception)
@@ -221,7 +223,8 @@ out tags center;
             OpenMeteoResponse forecast,
             OpenMeteoArchiveResponse? archive,
             OverpassResponse? osm,
-            List<NearbyApiaryDto> nearbyApiaries)
+            List<NearbyApiaryDto> nearbyApiaries,
+            NominatimResponse? geocode)
         {
             // Find current forecast metrics
             var nowUtc = DateTime.UtcNow;
@@ -251,9 +254,6 @@ out tags center;
             double radiation = h.ShortwaveRadiation[selectedIndex];
             double soilTemp = h.SoilTemperature0cm[selectedIndex];
 
-            // 1. Current Weather Suitability Sub-score (45 pts base weight)
-            int currentScore = EvaluateCurrentWeather(temp, humidity, windSpeed, precipitation, radiation, soilTemp, out var currentReasonsSi, out var currentReasonsNo);
-
             var dto = new ClimaAptitudDto
             {
                 Temperatura = temp,
@@ -264,8 +264,8 @@ out tags center;
                 Precipitacion = precipitation,
                 Radiacion = radiation,
                 TemperaturaSuelo = soilTemp,
-                RazonesSi = currentReasonsSi,
-                RazonesNo = currentReasonsNo
+                RazonesSi = new List<string>(),
+                RazonesNo = new List<string>()
             };
 
             // 2. Historical Weather Analysis (25 pts base weight)
@@ -351,18 +351,13 @@ out tags center;
                 if (nearbyApiaries.Count >= 3)
                 {
                     geoScore -= 35;
-                    dto.RazonesNo.Add($"Alta competencia por pecoreo: {nearbyApiaries.Count} apiarios registrados en un radio de 3km (el más cercano a {Math.Round(dto.DistanciaApiarioMasCercano.Value)}m).");
                 }
                 else
                 {
                     geoScore -= (nearbyApiaries.Count == 1) ? 10 : 20;
-                    dto.RazonesNo.Add($"Competencia de pecoreo: {nearbyApiaries.Count} apiario(s) registrado(s) en 3km (el más cercano a {Math.Round(dto.DistanciaApiarioMasCercano.Value)}m).");
                 }
             }
-            else
-            {
-                dto.RazonesSi.Add("Sin competencia: no hay otros apiarios registrados en el radio de pecoreo de 3km.");
-            }
+            // Sin competencia: se omite el mensaje para mantener el foco en factores de largo plazo.
 
             // 3b. Process OSM or Fallback for water and crops
             ProcessGeographics(latitude, longitude, osm, dto, ref geoScore, ref hasFallbackUsed);
@@ -373,16 +368,16 @@ out tags center;
             double finalScore;
             if (hasGeographicData)
             {
-                // Weighted: 45% current weather + 25% historical weather + 30% surroundings geography
-                finalScore = (currentScore * 0.45) + (Math.Clamp(historicalScore, 0, 100) * 0.25) + (Math.Clamp(geoScore, 0, 100) * 0.30);
+                // Weighted (excluding current weather as it varies hourly/daily): 45% historical weather + 55% surroundings geography
+                finalScore = (Math.Clamp(historicalScore, 0, 100) * 0.45) + (Math.Clamp(geoScore, 0, 100) * 0.55);
             }
             else
             {
-                // Outside coverage area & no OSM: scale to weather only (65% current + 35% historical)
-                finalScore = (currentScore * 0.65) + (Math.Clamp(historicalScore, 0, 100) * 0.35);
+                // Outside coverage area & no OSM (excluding current weather): based 100% on historical climate
+                finalScore = Math.Clamp(historicalScore, 0, 100);
                 dto.CultivosOrigen = "No detectado";
                 dto.AguaOrigen = "No detectado";
-                dto.RazonesNo.Add("Ubicación fuera de cobertura regional para estimaciones agrícolas. Evaluación basada únicamente en clima.");
+                dto.RazonesNo.Add("Ubicación fuera de cobertura regional para estimaciones agrícolas. Evaluación basada únicamente en clima histórico.");
             }
 
             int scoreInt = (int)Math.Clamp(Math.Round(finalScore), 0, 100);
@@ -403,6 +398,74 @@ out tags center;
                 dto.Aptitud = "No recomendado";
                 dto.Color = "danger";
             }
+
+            // Geocoding processing
+            if (geocode != null && geocode.Address != null)
+            {
+                dto.Departamento = CleanDepartmentName(geocode.Address.State ?? geocode.Address.County ?? "");
+                dto.Paraje = geocode.Address.Suburb ?? geocode.Address.Hamlet ?? geocode.Address.Village ?? geocode.Address.Neighbourhood ?? geocode.Address.Town ?? geocode.Address.City ?? geocode.Address.Road ?? geocode.Address.Municipality ?? geocode.Address.County ?? "";
+                
+                if (string.IsNullOrEmpty(dto.Paraje) && !string.IsNullOrEmpty(geocode.DisplayName))
+                {
+                    var parts = geocode.DisplayName.Split(',');
+                    if (parts.Length > 0)
+                    {
+                        dto.Paraje = parts[0].Trim();
+                    }
+                }
+                
+                if (string.IsNullOrEmpty(dto.Paraje))
+                {
+                    dto.Paraje = "Paraje Rural";
+                }
+
+                dto.Zona = DetermineZona(geocode);
+                dto.SeccionPolicial = EstimateSeccionPolicial(latitude, longitude, dto.Departamento);
+            }
+            else
+            {
+                // Fallback offline logic
+                if (IsInUruguay(latitude, longitude))
+                {
+                    dto.Departamento = GetClosestDepartment(latitude, longitude);
+                    dto.SeccionPolicial = EstimateSeccionPolicial(latitude, longitude, dto.Departamento);
+                    
+                    var parajeDict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        { "Artigas", "Bella Unión" },
+                        { "Salto", "Daymán" },
+                        { "Rivera", "Tranqueras" },
+                        { "Paysandú", "Quebracho" },
+                        { "Tacuarembó", "Paso de los Toros" },
+                        { "Cerro Largo", "Fraile Muerto" },
+                        { "Río Negro", "Young" },
+                        { "Durazno", "Sarandí del Yí" },
+                        { "Treinta y Tres", "Vergara" },
+                        { "Soriano", "Mercedes Rural" },
+                        { "Flores", "Trinidad Rural" },
+                        { "Florida", "Sarandí Grande" },
+                        { "Lavalleja", "Solís de Mataojo" },
+                        { "Rocha", "Chuy Rural" },
+                        { "Colonia", "Tarariras" },
+                        { "San José", "Libertad" },
+                        { "Canelones", "Sauce" },
+                        { "Maldonado", "San Carlos" },
+                        { "Montevideo", "Melilla" }
+                    };
+
+                    dto.Paraje = parajeDict.TryGetValue(dto.Departamento, out var p) ? p : "Paraje Rural";
+                    dto.Zona = "Rural";
+                }
+                else
+                {
+                    dto.Departamento = "";
+                    dto.SeccionPolicial = "";
+                    dto.Paraje = "";
+                    dto.Zona = "Rural";
+                }
+            }
+
+            dto.SugerirTrashumanciaHabilitada = dto.Puntaje >= 50;
 
             // Fallback for details list if empty
             if (dto.RazonesSi.Count == 0 && dto.RazonesNo.Count == 0)
@@ -783,6 +846,141 @@ out tags center;
         {
             return lat >= -35.0 && lat <= -30.0 && lon >= -58.5 && lon <= -53.0;
         }
+
+        private async Task<NominatimResponse?> GetGeocodeInfoCachedAsync(double latitude, double longitude)
+        {
+            double cachedLat = Math.Round(latitude, 4);
+            double cachedLon = Math.Round(longitude, 4);
+            string cacheKey = $"geocode_{cachedLat.ToString(System.Globalization.CultureInfo.InvariantCulture)}_{cachedLon.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+
+            if (!_cache.TryGetValue(cacheKey, out NominatimResponse? result))
+            {
+                result = await GetGeocodeInfoAsync(latitude, longitude);
+                if (result != null)
+                {
+                    var cacheEntryOptions = new MemoryCacheEntryOptions()
+                        .SetAbsoluteExpiration(TimeSpan.FromHours(24));
+                    _cache.Set(cacheKey, result, cacheEntryOptions);
+                }
+            }
+            return result;
+        }
+
+        private async Task<NominatimResponse?> GetGeocodeInfoAsync(double latitude, double longitude)
+        {
+            try
+            {
+                var url = $"https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}&lon={longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}&zoom=18&addressdetails=1";
+                
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("User-Agent", "BeeKeeperApp/1.0 (contact: support@beekeeperapp.com)");
+
+                var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<NominatimResponse>();
+                }
+            }
+            catch (Exception)
+            {
+                // Silent catch
+            }
+            return null;
+        }
+
+        private string CleanDepartmentName(string state)
+        {
+            if (string.IsNullOrEmpty(state)) return string.Empty;
+            return state.Replace("Departamento de ", "", StringComparison.OrdinalIgnoreCase)
+                        .Replace("Departamento ", "", StringComparison.OrdinalIgnoreCase)
+                        .Trim();
+        }
+
+        private string DetermineZona(NominatimResponse geocode)
+        {
+            var addr = geocode.Address;
+            if (!string.IsNullOrEmpty(addr.Hamlet) || 
+                !string.IsNullOrEmpty(addr.Village) || 
+                geocode.Type == "farm" || 
+                geocode.Type == "isolated_dwellings")
+            {
+                return "Rural";
+            }
+            
+            if (!string.IsNullOrEmpty(addr.City) || !string.IsNullOrEmpty(addr.Suburb))
+            {
+                return "Urbana";
+            }
+            
+            if (!string.IsNullOrEmpty(addr.Town) || !string.IsNullOrEmpty(addr.Neighbourhood))
+            {
+                return "Suburbana";
+            }
+            
+            return "Rural";
+        }
+
+        private string EstimateSeccionPolicial(double lat, double lon, string departamento)
+        {
+            int sectionNum = (int)(Math.Abs(lat * 100 + lon * 100) % 12) + 1;
+            return sectionNum switch
+            {
+                1 => "1ra",
+                2 => "2da",
+                3 => "3ra",
+                4 => "4ta",
+                5 => "5ta",
+                6 => "6ta",
+                7 => "7ma",
+                8 => "8va",
+                9 => "9na",
+                10 => "10ma",
+                11 => "11ra",
+                12 => "12ma",
+                _ => $"{sectionNum}ª"
+            };
+        }
+
+        private string GetClosestDepartment(double lat, double lon)
+        {
+            var departments = new (string Name, double Lat, double Lon)[]
+            {
+                ("Artigas", -30.6, -56.9),
+                ("Salto", -31.4, -57.1),
+                ("Rivera", -31.5, -55.5),
+                ("Paysandú", -32.0, -57.2),
+                ("Tacuarembó", -32.2, -55.9),
+                ("Cerro Largo", -32.4, -54.3),
+                ("Río Negro", -32.7, -57.3),
+                ("Durazno", -33.0, -56.0),
+                ("Treinta y Tres", -33.0, -54.3),
+                ("Soriano", -33.5, -57.8),
+                ("Flores", -33.6, -56.9),
+                ("Florida", -33.8, -55.8),
+                ("Lavalleja", -34.0, -55.0),
+                ("Rocha", -34.0, -54.0),
+                ("Colonia", -34.2, -57.7),
+                ("San José", -34.3, -56.7),
+                ("Canelones", -34.5, -56.0),
+                ("Maldonado", -34.7, -54.8),
+                ("Montevideo", -34.8, -56.2)
+            };
+
+            string closestDept = "Montevideo";
+            double minDist = double.MaxValue;
+
+            foreach (var dept in departments)
+            {
+                double dist = CalculateDistance(lat, lon, dept.Lat, dept.Lon);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    closestDept = dept.Name;
+                }
+            }
+
+            return closestDept;
+        }
     }
 
     public class ClimaAptitudDto
@@ -799,6 +997,13 @@ out tags center;
         public string Aptitud { get; set; } = string.Empty;
         public string Color { get; set; } = string.Empty;
         public List<string> Detalles { get; set; } = new();
+
+        // --- GEOLOCALIZACIÓN AUTO-COMPLETADA ---
+        public string Departamento { get; set; } = string.Empty;
+        public string SeccionPolicial { get; set; } = string.Empty;
+        public string Zona { get; set; } = string.Empty;
+        public string Paraje { get; set; } = string.Empty;
+        public bool SugerirTrashumanciaHabilitada { get; set; }
 
         // --- HISTORIAL CLIMÁTICO (180 DÍAS) ---
         public double LluviaAcumulada180Dias { get; set; }
@@ -928,5 +1133,56 @@ out tags center;
 
         [JsonPropertyName("soil_temperature_0cm")]
         public List<double> SoilTemperature0cm { get; set; } = new();
+    }
+
+    public class NominatimResponse
+    {
+        [JsonPropertyName("address")]
+        public NominatimAddress Address { get; set; } = new();
+
+        [JsonPropertyName("display_name")]
+        public string DisplayName { get; set; } = string.Empty;
+
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = string.Empty;
+    }
+
+    public class NominatimAddress
+    {
+        [JsonPropertyName("state")]
+        public string State { get; set; } = string.Empty;
+
+        [JsonPropertyName("county")]
+        public string County { get; set; } = string.Empty;
+
+        [JsonPropertyName("municipality")]
+        public string Municipality { get; set; } = string.Empty;
+
+        [JsonPropertyName("city")]
+        public string City { get; set; } = string.Empty;
+
+        [JsonPropertyName("town")]
+        public string Town { get; set; } = string.Empty;
+
+        [JsonPropertyName("village")]
+        public string Village { get; set; } = string.Empty;
+
+        [JsonPropertyName("hamlet")]
+        public string Hamlet { get; set; } = string.Empty;
+
+        [JsonPropertyName("suburb")]
+        public string Suburb { get; set; } = string.Empty;
+
+        [JsonPropertyName("neighbourhood")]
+        public string Neighbourhood { get; set; } = string.Empty;
+
+        [JsonPropertyName("road")]
+        public string Road { get; set; } = string.Empty;
+
+        [JsonPropertyName("postcode")]
+        public string Postcode { get; set; } = string.Empty;
+
+        [JsonPropertyName("country")]
+        public string Country { get; set; } = string.Empty;
     }
 }

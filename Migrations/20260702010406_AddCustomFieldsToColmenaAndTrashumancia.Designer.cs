@@ -4,6 +4,7 @@ using BeeKeeperApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BeeKeeperApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260702010406_AddCustomFieldsToColmenaAndTrashumancia")]
+    partial class AddCustomFieldsToColmenaAndTrashumancia
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -185,10 +188,7 @@ namespace BeeKeeperApp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ApiarioId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ColmenaId")
+                    b.Property<int>("ColmenaId")
                         .HasColumnType("int");
 
                     b.Property<string>("Dosis")
@@ -244,8 +244,6 @@ namespace BeeKeeperApp.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ApiarioId");
 
                     b.HasIndex("ColmenaId");
 
@@ -364,13 +362,11 @@ namespace BeeKeeperApp.Migrations
 
             modelBuilder.Entity("BeeKeeperApp.Models.Entities.Revision", b =>
                 {
-                    b.HasOne("BeeKeeperApp.Models.Entities.Apiario", "Apiario")
-                        .WithMany()
-                        .HasForeignKey("ApiarioId");
-
                     b.HasOne("BeeKeeperApp.Models.Entities.Colmena", "Colmena")
                         .WithMany("Revisiones")
-                        .HasForeignKey("ColmenaId");
+                        .HasForeignKey("ColmenaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.OwnsOne("BeeKeeperApp.Models.Entities.Clima", "CondicionesClimaticas", b1 =>
                         {
@@ -404,8 +400,6 @@ namespace BeeKeeperApp.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("RevisionId");
                         });
-
-                    b.Navigation("Apiario");
 
                     b.Navigation("Colmena");
 

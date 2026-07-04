@@ -4,20 +4,22 @@
     ViewData["Title"] = "Gestión de Apiarios";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <p>
-        <a asp-action="Create" class="btn btn-honey">+ Nuevo Apiario</a>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <a asp-action="Create" class="btn btn-honey">+ Registrar Apiario</a>
         <a asp-action="Comparacion" class="btn btn-outline-info ms-2">Comparar Apiarios</a>
-    </p>
-    <div class="dropdown">
-        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-            Ordenar por
-        </button>
-        <ul class="dropdown-menu">
-            <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="@ViewData["NameSortParm"]">Nombre</a></li>
-            <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="@ViewData["DateSortParm"]">Fecha</a></li>
-        </ul>
     </div>
+    <form method="get" class="sort-control">
+        <span class="sort-label">Ordenar por:</span>
+        <select name="sortBy" onchange="this.form.submit()">
+            <option value="Nombre" selected="@(ViewBag.SortBy == "Nombre")">Nombre</option>
+            <option value="Fecha" selected="@(ViewBag.SortBy == "Fecha")">Fecha de Creación</option>
+            <option value="Produccion" selected="@(ViewBag.SortBy == "Produccion")">Producción</option>
+        </select>
+        <a href="?sortBy=@ViewBag.SortBy&descending=@((!ViewBag.Descending).ToString().ToLower())" class="sort-dir-btn" title="Cambiar dirección de orden">
+            @(ViewBag.Descending == true ? "▲" : "▼")
+        </a>
+    </form>
 </div>
 
 <div class="row">
@@ -35,6 +37,9 @@
                     <img src="/Images/marcador-de-mapa.png" width="16" /> @item.Zona, @item.SeccionPolicial
                 </p>
 
+                @{
+                    var produccionTotal = item.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg);
+                }
                 <div class="stats-grid mt-3">
                     <div class="stat-item">
                         <a href="/Colmenas?apiarioId=@item.Id" class="text-decoration-none text-dark">
@@ -43,11 +48,14 @@
                         </a>
                     </div>
                 </div>
+                <p class="mt-2 mb-0 small" style="color: #b8860b; font-weight: 600;">
+                    Producido: <span style="font-weight: 700;">@produccionTotal.ToString("N1") kg</span>
+                </p>
 
                 <div class="mt-4 d-flex gap-2">
-                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark">Ver detalles</a>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"><img src="/Images/editar.png" width="14" /></a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">X</a>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark">Detalles</a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Editar</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Eliminar</a>
                 </div>
             </div>
         </div>

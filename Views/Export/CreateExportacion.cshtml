@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Registrar Exportación";
+    var stockKg = (double)(ViewBag.StockDisponibleKg ?? 0.0);
+    var maxBarriles = (int)Math.Floor(stockKg / 300.0);
 }
 
 <div class="row justify-content-center">
@@ -10,33 +12,64 @@
             <h2 class="text-honey-dark mb-4"><i class="bi bi-box-seam"></i> Registrar Exportación</h2>
             <hr />
 
-            <form asp-action="CreateExportacion">
-                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-                
+            @* Muestra stock disponible *@
+            <div class="alert alert-info mb-4" role="alert">
+                <strong>📦 Stock disponible:</strong>
+                @stockKg.ToString("N1") kg
+                <span class="text-muted">(máximo @maxBarriles barril@(maxBarriles != 1 ? "es" : "") de 300 kg)</span>
+            </div>
+
+            <form asp-action="CreateExportacion" id="formExportacion">
                 <div class="mb-3">
-                    <label asp-for="CantidadBarriles" class="form-label fw-bold">Cantidad de Barriles</label>
-                    <input asp-for="CantidadBarriles" type="number" min="1" class="form-control" placeholder="Cantidad" required />
-                    <span asp-validation-for="CantidadBarriles" class="text-danger"></span>
+                    <label for="cantidadKg" class="form-label fw-bold">Cantidad a exportar (kg)</label>
+                    <div class="input-group has-validation">
+                        <input type="number" id="cantidadKg" name="cantidadKg"
+                               class="form-control @(ViewData.ModelState.ContainsKey("cantidadKg") && ViewData.ModelState["cantidadKg"]!.Errors.Count > 0 ? "is-invalid" : "")"
+                               placeholder="Ej: 1500"
+                               min="1" max="@stockKg.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)"
+                               step="0.1" required
+                               value="@(ViewBag.CantidadKg != null ? ViewBag.CantidadKg.ToString(System.Globalization.CultureInfo.InvariantCulture) : "")" />
+                        <span class="input-group-text">kg</span>
+                        <div class="invalid-feedback" id="cantidadKg-error">
+                            @if (ViewData.ModelState.ContainsKey("cantidadKg") && ViewData.ModelState["cantidadKg"]!.Errors.Count > 0)
+                            {
+                                @ViewData.ModelState["cantidadKg"]!.Errors[0].ErrorMessage
+                            }
+                        </div>
+                    </div>
+                    <div class="form-text text-muted">Máximo: @stockKg.ToString("N1") kg disponibles</div>
+                </div>
+
+                @* Barriles calculados automáticamente *@
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Barriles resultantes</label>
+                    <div class="input-group">
+                        <input type="text" id="barrilesCalculados" class="form-control" readonly
+                               value="0" style="background:#f8f9fa; font-weight:600;" />
+                        <span class="input-group-text">barriles (× 300 kg)</span>
+                    </div>
+                    <div class="form-text text-muted" id="restoKgInfo"></div>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="Destino" class="form-label fw-bold">Destino</label>
-                    <input asp-for="Destino" class="form-control" placeholder="Distribuidor" required />
-                    <span asp-validation-for="Destino" class="text-danger"></span>
+                    <input asp-for="Destino" class="form-control" placeholder="Distribuidor / País" required />
+                    <span asp-validation-for="Destino" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-4">
                     <label asp-for="Fecha" class="form-label fw-bold">Fecha de Exportación</label>
-                    <input asp-for="Fecha" type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
-                    <span asp-validation-for="Fecha" class="text-danger"></span>
+                    <input asp-for="Fecha" type="date" class="form-control"
+                           value="@DateTime.Now.ToString("yyyy-MM-dd")" max="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                    <span asp-validation-for="Fecha" class="text-danger small"></span>
                 </div>
 
                 <div class="d-flex justify-content-between mt-4">
                     <a asp-action="Exportaciones" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left"></i> Cancelar
+                        Cancelar
                     </a>
-                    <button type="submit" class="btn btn-honey">
-                        <i class="bi bi-save"></i> Guardar Exportación
+                    <button type="submit" class="btn btn-primary">
+                        Guardar Exportación
                     </button>
                 </div>
             </form>
@@ -46,4 +79,85 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        const stockMaxKg = @stockKg.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+
+        function validateQuantity() {
+            const input = document.getElementById('cantidadKg');
+            const errorDiv = document.getElementById('cantidadKg-error');
+            const kg = parseFloat(input.value) || 0;
+
+            if (input.value === '') {
+                input.classList.remove('is-invalid');
+                errorDiv.textContent = '';
+                input.setCustomValidity('');
+                return true;
+            }
+
+            if (kg <= 0) {
+                input.classList.add('is-invalid');
+                errorDiv.textContent = 'Ingrese una cantidad de kilogramos mayor a 0.';
+                input.setCustomValidity('Ingrese una cantidad de kilogramos mayor a 0.');
+                return false;
+            }
+
+            if (kg > stockMaxKg) {
+                input.classList.add('is-invalid');
+                errorDiv.textContent = `Excede el stock disponible (${stockMaxKg.toFixed(1)} kg)`;
+                input.setCustomValidity(`Excede el stock disponible (${stockMaxKg.toFixed(1)} kg)`);
+                return false;
+            }
+
+            input.classList.remove('is-invalid');
+            errorDiv.textContent = '';
+            input.setCustomValidity('');
+            return true;
+        }
+
+        document.getElementById('cantidadKg').addEventListener('input', function () {
+            const kg = parseFloat(this.value) || 0;
+            const barriles = Math.floor(kg / 300);
+            const resto = kg % 300;
+
+            document.getElementById('barrilesCalculados').value = barriles;
+
+            const restoInfo = document.getElementById('restoKgInfo');
+            if (kg > 0 && resto > 0) {
+                restoInfo.textContent = `Nota: ${resto.toFixed(1)} kg no completan un barril y no serán exportados.`;
+            } else if (kg > 0 && barriles === 0) {
+                restoInfo.textContent = 'Se necesitan al menos 300 kg para completar un barril.';
+                restoInfo.style.color = '#e74c3c';
+            } else {
+                restoInfo.textContent = '';
+            }
+
+            validateQuantity();
+        });
+
+        // Run validation on page load in case values are returned from server
+        document.addEventListener('DOMContentLoaded', function () {
+            const input = document.getElementById('cantidadKg');
+            if (input.value !== '') {
+                // Trigger input logic to calculate barrels and show info notes
+                const kg = parseFloat(input.value) || 0;
+                const barriles = Math.floor(kg / 300);
+                const resto = kg % 300;
+                document.getElementById('barrilesCalculados').value = barriles;
+                
+                const restoInfo = document.getElementById('restoKgInfo');
+                if (kg > 0 && resto > 0) {
+                    restoInfo.textContent = `Nota: ${resto.toFixed(1)} kg no completan un barril y no serán exportados.`;
+                }
+
+                validateQuantity();
+            }
+        });
+
+        document.getElementById('formExportacion').addEventListener('submit', function (event) {
+            if (!validateQuantity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        });
+    </script>
 }

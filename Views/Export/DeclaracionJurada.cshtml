@@ -43,17 +43,44 @@
             }
         }
         /* ===== PRINT ONLY ===== */
+        @@page {
+            size: A4;
+            margin: 1.5cm 1.5cm 1.5cm 1.5cm;
+            /* Elimina el header y footer del browser (título, URL, número de página del browser) */
+            @@top-left { content: none; }
+            @@top-center { content: none; }
+            @@top-right { content: none; }
+            @@bottom-left { content: none; }
+            @@bottom-center { content: none; }
+            @@bottom-right { content: none; }
+        }
         @@media print {
+            html, body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
             body { 
                 padding: 0; 
                 max-width: 100%; 
                 background-color: #ffffff !important;
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact; 
             }
             #form-screen { display: none !important; }
             #form-print { display: block !important; }
             .print-btn { display: none !important; }
+            .shared-top { display: none !important; }
+            .print-page {
+                page-break-after: always;
+                page-break-inside: avoid;
+                display: flex;
+                flex-direction: column;
+                min-height: calc(297mm - 3cm);
+            }
+            .print-page:last-child {
+                page-break-after: avoid;
+            }
+            .print-page-spacer {
+                flex: 1;
+            }
         }
 
         /* ===== SHARED STYLES (header/title/meta shown in both) ===== */
@@ -110,23 +137,69 @@
         .p-inline-row { display: flex; gap: 30px; margin-bottom: 14px; }
         .p-inline-item { flex: 1; font-size: 14px; font-weight: bold; }
 
-        .footer-note {
-            margin-top: 36px;
-            font-size: 10px;
-            border: 1px solid #000;
-            background-color: #e6e6e6;
-            padding: 9px;
-            text-align: justify;
+        .footer-box {
+            margin-top: 30px;
+            font-size: 10.5px;
+            border: none;
+            width: 100%;
+            display: block;
+            background-color: transparent;
         }
-        .footer-note-light {
-            font-size: 10px;
+        .footer-box-upper {
+            background-color: #dbdbdb;
+            padding: 8px 10px;
+            font-weight: bold;
+            border-bottom: 1px solid #aaa;
+            text-align: left;
+            line-height: 1.4;
+            color: #000;
+        }
+        .footer-box-lower {
             background-color: #f2f2f2;
-            padding: 9px;
-            text-align: justify;
-            border: 1px solid #000;
-            border-top: none;
+            padding: 8px 10px;
+            text-align: left;
+            line-height: 1.4;
+            color: #000;
         }
         .page-num { text-align: right; font-size: 10px; margin-top: 12px; }
+
+        /* Section D Table Styles */
+        .d-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            margin-top: 10px;
+            background-color: #ffffff;
+            border: none;
+        }
+        .d-table th {
+            background-color: #dbdbdb;
+            color: #000;
+            font-weight: bold;
+            border: none;
+            padding: 8px 4px;
+            font-size: 11px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .d-table td {
+            padding: 10px 6px;
+            border: none;
+            text-align: center;
+            font-size: 11px;
+            color: #000;
+            vertical-align: middle;
+        }
+        .d-table tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .d-table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+        .col-center {
+            text-align: center !important;
+        }
     </style>
 </head>
 <body>
@@ -177,7 +250,7 @@
                     </div>
                     <div class="s-group">
                         <label for="documento">Documento de identidad</label>
-                        <input type="text" id="documento" />
+                        <input type="text" id="documento" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                     </div>
                     <div class="s-group"></div>
                 </div>
@@ -230,18 +303,65 @@
                     </div>
                     <div class="s-group">
                         <label for="nucleos">Cantidad de núcleos</label>
-                        <input type="text" id="nucleos" value="0" />
+                        <input type="text" id="nucleos" value="0" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                     </div>
                     <div class="s-group"></div>
                 </div>
             </div>
         </div>
 
-        <div class="footer-note">
-            <strong>La presente declaración jurada está exonerada del pago del timbre de la Caja de Jubilaciones y Pensiones de Profesionales Universitarios, según Ley 19.535 del 25 de setiembre de 2017, Art. 93.</strong>
+        <!-- SECTION D (Screen version) -->
+        <div class="s-section">
+            <div class="s-section-title">D. INFORMACIÓN DE LOS APIARIOS</div>
+            <div class="s-content" style="overflow-x: auto; padding: 16px 0;">
+                <table class="d-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Nro de Apiario</th>
+                            <th rowspan="2">Nombre de Apiario</th>
+                            <th rowspan="2">Departamento</th>
+                            <th rowspan="2">Seccional Policial</th>
+                            <th rowspan="2">Paraje</th>
+                            <th rowspan="2">Cantidad de Colmenas</th>
+                            <th rowspan="2">Cantidad de núcleos</th>
+                            <th colspan="2">Coordenadas</th>
+                        </tr>
+                        <tr>
+                            <th>Latitud</th>
+                            <th>longitud</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int sIndex = 1;
+                        }
+                        @foreach (var apiario in Model)
+                        {
+                            <tr>
+                                <td class="col-center">@sIndex</td>
+                                <td>@apiario.Nombre</td>
+                                <td>@apiario.Departamento</td>
+                                <td class="col-center">@apiario.SeccionPolicial</td>
+                                <td>@apiario.Paraje</td>
+                                <td class="col-center">@apiario.Colmenas.Count</td>
+                                <td class="col-center">0</td>
+                                <td class="col-center">@apiario.Latitud.ToString("F5", System.Globalization.CultureInfo.InvariantCulture)</td>
+                                <td class="col-center">@apiario.Longitud.ToString("F5", System.Globalization.CultureInfo.InvariantCulture)</td>
+                            </tr>
+                            sIndex++;
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="footer-note-light">
-            Se deja constancia que la información proporcionada en este formulario tiene carácter de declaración jurada, con sujeción a las sanciones legalmente establecidas y será de carácter reservado. Según la Ley 18.719 del año 2010, Art. 380, y Decreto Reglamentario 371 del año 2013, Art. 1, 2, 7 y 8, los titulares de las explotaciones apícolas deberán actualizar sus datos al menos una vez al año bajo el régimen de declaración jurada. Una vez confirmada su declaración podrá descargar una copia de su declaración jurada.
+
+        <div class="footer-box">
+            <div class="footer-box-upper">
+                La presente declaración jurada está exonerada del pago del timbre de la Caja de Jubilaciones y Pensiones de Profesionales Universitarios, según Ley 19.535 del 25 de setiembre de 2017, Art. 93.
+            </div>
+            <div class="footer-box-lower">
+                Se deja constancia que la información proporcionada en este formulario tiene carácter de declaración jurada, con sujeción a las sanciones legalmente establecidas y será de carácter reservado. Según la Ley 18.719 del año 2010, Art. 380, y Decreto Reglamentario 371 del año 2013, Art. 1, 2, 7 y 8, los titulares de las explotaciones apícolas deberán actualizar sus datos al menos una vez al año bajo el régimen de declaración jurada. Una vez confirmada su declaración podrá descargar una copia de su declaración jurada
+            </div>
         </div>
 
         <button class="print-btn" onclick="prepararYImprimir()">🖨️ Imprimir / Guardar Declaración</button>
@@ -250,78 +370,158 @@
     <!-- ========================== -->
     <!--   PRINT: Document Layout   -->
     <!-- ========================== -->
+    <!-- ========================== -->
+    <!--   PRINT: Document Layout   -->
+    <!-- ========================== -->
     <div id="form-print">
+        <div class="print-page">
+            <!-- HEADER (solo impresión) -->
+            <img class="header-img" src="/Images/Formulario-Min-Ganaderia-Cabecera.PNG" />
+            <div class="title-section">
+                <h1>REGISTRO NACIONAL DE APICULTORES</h1>
+                <h2>Declaración Jurada @hoy.Year</h2>
+                <h3>Período 01/07/@hoy.Year - 31/07/@hoy.Year</h3>
+            </div>
+            <div class="meta-info">
+                <div class="meta-column">
+                    <div>Número de RNA: <strong>@rna</strong></div>
+                    <div>Fecha de aprobación de Declaración: <strong>@hoy.ToString("dd/MM/yyyy")</strong></div>
+                </div>
+                <div class="meta-column">
+                    <div>Válida hasta: <strong>@validaHasta.ToString("dd/MM/yyyy")</strong></div>
+                    <div>Estado: <strong>Aprobada</strong></div>
+                </div>
+            </div>
+            <!-- SECTION A -->
+            <div class="p-section">
+                <div class="p-section-title">A. PERSONA FÍSICA O JURÍDICA</div>
+                <div class="p-content p-content-gray">
+                    <div class="p-name" id="p-nombre"></div>
+                    <div class="p-row">
+                        <div class="p-field">
+                            <span class="p-label">Fecha de nacimiento</span>
+                            <span class="p-value" id="p-fecha"></span>
+                        </div>
+                        <div class="p-field">
+                            <span class="p-label">Documento de identidad</span>
+                            <span class="p-value" id="p-documento"></span>
+                        </div>
+                        <div class="p-field"></div>
+                    </div>
+                </div>
+            </div>
 
-        <!-- SECTION A -->
-        <div class="p-section">
-            <div class="p-section-title">A. PERSONA FÍSICA O JURÍDICA</div>
-            <div class="p-content p-content-gray">
-                <div class="p-name" id="p-nombre"></div>
-                <div class="p-row">
-                    <div class="p-field">
-                        <span class="p-label">Fecha de nacimiento</span>
-                        <span class="p-value" id="p-fecha"></span>
+            <!-- SECTION B -->
+            <div class="p-section">
+                <div class="p-section-title">B. DOMICILIO</div>
+                <div class="p-content p-content-gray">
+                    <div class="p-inline-row">
+                        <div class="p-inline-item" id="p-colonia"></div>
+                        <div class="p-inline-item" id="p-seccion"></div>
+                        <div class="p-inline-item" id="p-camino"></div>
                     </div>
-                    <div class="p-field">
-                        <span class="p-label">Documento de identidad</span>
-                        <span class="p-value" id="p-documento"></span>
+                    <div class="p-row">
+                        <div class="p-field">
+                            <span class="p-label">Celular de contacto principal</span>
+                            <span class="p-value" id="p-cel1"></span>
+                        </div>
+                        <div class="p-field">
+                            <span class="p-label">Celular de contacto secundario</span>
+                            <span class="p-value" id="p-cel2"></span>
+                        </div>
+                        <div class="p-field">
+                            <span class="p-label">Correo electrónico</span>
+                            <span class="p-value" id="p-email"></span>
+                        </div>
                     </div>
-                    <div class="p-field"></div>
+                </div>
+            </div>
+
+            <!-- SECTION C -->
+            <div class="p-section">
+                <div class="p-section-title">C. STOCK APÍCOLA</div>
+                <div class="p-content p-content-gray">
+                    <div class="p-row">
+                        <div class="p-field">
+                            <span class="p-label">Cantidad de colmenas en propiedad</span>
+                            <span class="p-value" id="p-colmenas"></span>
+                        </div>
+                        <div class="p-field">
+                            <span class="p-label">Cantidad de núcleos</span>
+                            <span class="p-value" id="p-nucleos"></span>
+                        </div>
+                        <div class="p-field"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="print-page-spacer"></div>
+            <div class="footer-box">
+                <div class="footer-box-upper">
+                    La presente declaración jurada está exonerada del pago del timbre de la Caja de Jubilaciones y Pensiones de Profesionales Universitarios, según Ley 19.535 del 25 de setiembre de 2017, Art. 93.
+                </div>
+                <div class="footer-box-lower">
+                    Se deja constancia que la información proporcionada en este formulario tiene carácter de declaración jurada, con sujeción a las sanciones legalmente establecidas y será de carácter reservado. Según la Ley 18.719 del año 2010, Art. 380, y Decreto Reglamentario 371 del año 2013, Art. 1, 2, 7 y 8, los titulares de las explotaciones apícolas deberán actualizar sus datos al menos una vez al año bajo el régimen de declaración jurada. Una vez confirmada su declaración podrá descargar una copia de su declaración jurada
                 </div>
             </div>
         </div>
 
-        <!-- SECTION B -->
-        <div class="p-section">
-            <div class="p-section-title">B. DOMICILIO</div>
-            <div class="p-content p-content-gray">
-                <div class="p-inline-row">
-                    <div class="p-inline-item" id="p-colonia"></div>
-                    <div class="p-inline-item" id="p-seccion"></div>
-                    <div class="p-inline-item" id="p-camino"></div>
+        <div class="print-page">
+            <!-- SECTION D -->
+            <div class="p-section">
+                <div class="p-section-title">D. INFORMACIÓN DE LOS APIARIOS</div>
+                <div class="p-content" style="padding: 16px 0;">
+                    <table class="d-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Nro de Apiario</th>
+                                <th rowspan="2">Nombre de Apiario</th>
+                                <th rowspan="2">Departamento</th>
+                                <th rowspan="2">Seccional Policial</th>
+                                <th rowspan="2">Paraje</th>
+                                <th rowspan="2">Cantidad de Colmenas</th>
+                                <th rowspan="2">Cantidad de núcleos</th>
+                                <th colspan="2">Coordenadas</th>
+                            </tr>
+                            <tr>
+                                <th>Latitud</th>
+                                <th>longitud</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                int index = 1;
+                            }
+                            @foreach (var apiario in Model)
+                            {
+                                <tr>
+                                    <td class="col-center">@index</td>
+                                    <td>@apiario.Nombre</td>
+                                    <td>@apiario.Departamento</td>
+                                    <td class="col-center">@apiario.SeccionPolicial</td>
+                                    <td>@apiario.Paraje</td>
+                                    <td class="col-center">@apiario.Colmenas.Count</td>
+                                    <td class="col-center">0</td>
+                                    <td class="col-center">@apiario.Latitud.ToString("F5", System.Globalization.CultureInfo.InvariantCulture)</td>
+                                    <td class="col-center">@apiario.Longitud.ToString("F5", System.Globalization.CultureInfo.InvariantCulture)</td>
+                                </tr>
+                                index++;
+                            }
+                        </tbody>
+                    </table>
                 </div>
-                <div class="p-row">
-                    <div class="p-field">
-                        <span class="p-label">Celular de contacto principal</span>
-                        <span class="p-value" id="p-cel1"></span>
-                    </div>
-                    <div class="p-field">
-                        <span class="p-label">Celular de contacto secundario</span>
-                        <span class="p-value" id="p-cel2"></span>
-                    </div>
-                    <div class="p-field">
-                        <span class="p-label">Correo electrónico</span>
-                        <span class="p-value" id="p-email"></span>
-                    </div>
+            </div>
+
+            <div class="print-page-spacer"></div>
+            <div class="footer-box">
+                <div class="footer-box-upper">
+                    La presente declaración jurada está exonerada del pago del timbre de la Caja de Jubilaciones y Pensiones de Profesionales Universitarios, según Ley 19.535 del 25 de setiembre de 2017, Art. 93.
+                </div>
+                <div class="footer-box-lower">
+                    Se deja constancia que la información proporcionada en este formulario tiene carácter de declaración jurada, con sujeción a las sanciones legalmente establecidas y será de carácter reservado. Según la Ley 18.719 del año 2010, Art. 380, y Decreto Reglamentario 371 del año 2013, Art. 1, 2, 7 y 8, los titulares de las explotaciones apícolas deberán actualizar sus datos al menos una vez al año bajo el régimen de declaración jurada. Una vez confirmada su declaración podrá descargar una copia de su declaración jurada
                 </div>
             </div>
         </div>
-
-        <!-- SECTION C -->
-        <div class="p-section">
-            <div class="p-section-title">C. STOCK APÍCOLA</div>
-            <div class="p-content p-content-gray">
-                <div class="p-row">
-                    <div class="p-field">
-                        <span class="p-label">Cantidad de colmenas en propiedad</span>
-                        <span class="p-value" id="p-colmenas"></span>
-                    </div>
-                    <div class="p-field">
-                        <span class="p-label">Cantidad de núcleos</span>
-                        <span class="p-value" id="p-nucleos"></span>
-                    </div>
-                    <div class="p-field"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="footer-note">
-            <strong>La presente declaración jurada está exonerada del pago del timbre de la Caja de Jubilaciones y Pensiones de Profesionales Universitarios, según Ley 19.535 del 25 de setiembre de 2017, Art. 93.</strong>
-        </div>
-        <div class="footer-note-light">
-            Se deja constancia que la información proporcionada en este formulario tiene carácter de declaración jurada, con sujeción a las sanciones legalmente establecidas y será de carácter reservado. Según la Ley 18.719 del año 2010, Art. 380, y Decreto Reglamentario 371 del año 2013, Art. 1, 2, 7 y 8, los titulares de las explotaciones apícolas deberán actualizar sus datos al menos una vez al año bajo el régimen de declaración jurada. Una vez confirmada su declaración podrá descargar una copia de su declaración jurada.
-        </div>
-        <div class="page-num">1/2</div>
     </div>
 
     <script>
@@ -342,7 +542,7 @@
             var colonia = document.getElementById('colonia').value || '';
             var seccion = document.getElementById('seccion').value || '';
             var camino  = document.getElementById('camino').value || '';
-            document.getElementById('p-colonia').textContent  = colonia ? 'Colonia / ' + colonia.toUpperCase() : '';
+            document.getElementById('p-colonia').textContent  = colonia ? colonia.toUpperCase() : '';
             document.getElementById('p-seccion').textContent  = seccion ? 'Sección policial ' + seccion : '';
             document.getElementById('p-camino').textContent   = camino;
 

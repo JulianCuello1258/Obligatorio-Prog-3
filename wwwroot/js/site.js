@@ -47,10 +47,14 @@ $(document).ready(function() {
     $('#notification-trigger').on('show.bs.dropdown', refreshNotifications);
     refreshNotifications();
 
-    // Loading animation on navigation
+    // Loading animation on navigation — skip for sort/filter links
     $('a').on('click', function(e) {
         const href = $(this).attr('href');
         if (href && href !== '#' && !href.startsWith('javascript') && !$(this).attr('target')) {
+            // Skip animation for sort/filter arrows and links flagged with data-no-anim
+            const skipAnim = $(this).attr('data-no-anim') !== undefined
+                || (href.includes('sortBy=') || href.includes('descending='));
+            if (skipAnim) return; // navigate directly
             e.preventDefault();
             BeeAnimations.showLoading(800, () => {
                 window.location.href = href;

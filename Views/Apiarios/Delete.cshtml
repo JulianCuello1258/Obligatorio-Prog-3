@@ -29,8 +29,10 @@
 
             <form asp-action="Delete">
                 <input type="hidden" asp-for="Id" />
-                <button type="submit" class="btn btn-danger w-100 mb-2">Sí, Eliminar Definitivamente</button>
-                <a asp-action="Index" class="btn btn-secondary w-100">Cancelar</a>
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-danger">Sí, Eliminar Definitivamente</button>
+                </div>
             </form>
         </div>
     </div>

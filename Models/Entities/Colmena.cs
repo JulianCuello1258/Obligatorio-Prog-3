@@ -23,6 +23,7 @@ namespace BeeKeeperApp.Models.Entities
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
         public NivelPoblacion? Poblacion { get; set; }
         public TipoTemperamento? Temperamento { get; set; }
+        public double ProduccionAcumulada { get; set; } = 0.0;
         [ForeignKey("ApiarioId")]
         public Apiario? Apiario { get; set; }
         public Reina? Reina { get; set; }

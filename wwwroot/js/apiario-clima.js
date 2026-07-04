@@ -83,18 +83,8 @@ function consultarClima(lat, lon, contenedorId) {
                 cropsLabel += ` <span class="text-info small" style="font-size: 0.7rem;">(Estimación Regional)</span>`;
             }
 
-            // Simplified competition display
+            // Competition display removed per user request
             let apiariesHtml = "";
-            if (data.apiariosCercanosCount > 0) {
-                const distNearest = (data.distanciaApiarioMasCercano / 1000).toFixed(1);
-                const compText = `${data.apiariosCercanosCount} apiarios registrados (más cercano: ${distNearest} km)`;
-                const compBadgeStyle = data.apiariosCercanosCount >= 3 ? "bg-danger" : "bg-warning text-dark";
-                apiariesHtml = `
-                                    <li class="py-1">
-                                        <span class="fw-bold text-dark me-2">🏡 Competencia por Pecoreo:</span>
-                                        <span class="badge ${compBadgeStyle}">${compText}</span>
-                                    </li>`;
-            }
 
             // Build detailed reasons lists (Por qué sí / Por qué no)
             let razonesSiHtml = "";
@@ -232,6 +222,54 @@ function consultarClima(lat, lon, contenedorId) {
 
                 </div>
             `;
+
+            // Autocompletado de campos del formulario con animación de resalte premium
+            function autoCompletarYAnimar(id, valor) {
+                const el = document.getElementById(id);
+                if (el && valor !== undefined && valor !== null && valor !== '') {
+                    if (el.value !== valor.toString()) {
+                        el.value = valor;
+                        el.dispatchEvent(new Event('change', { bubbles: true }));
+                        
+                        // Agregar animación
+                        el.classList.add('autofill-highlight');
+                        setTimeout(() => el.classList.remove('autofill-highlight'), 1800);
+                    }
+                }
+            }
+
+            autoCompletarYAnimar('Departamento', data.departamento);
+            autoCompletarYAnimar('SeccionPolicial', data.seccionPolicial);
+            
+            // Si existe Paraje (como en Edit), completamos Paraje y Zona por separado.
+            // Si no existe Paraje (como en Create), completamos Zona / Paraje (id="Zona") con el paraje.
+            const parajeEl = document.getElementById('Paraje');
+            const zonaEl = document.getElementById('Zona');
+            
+            if (parajeEl) {
+                autoCompletarYAnimar('Paraje', data.paraje);
+                if (zonaEl && zonaEl.tagName.toLowerCase() === 'select') {
+                    autoCompletarYAnimar('Zona', data.zona);
+                }
+            } else if (zonaEl) {
+                // En Create.cshtml, Zona es el campo para Zona / Paraje.
+                autoCompletarYAnimar('Zona', data.paraje);
+            }
+
+            // Casilla de Habilitar Trashumancia
+            const trashumanciaCheck = document.getElementById('TrashumanciaHabilitada');
+            if (trashumanciaCheck && data.sugerirTrashumanciaHabilitada !== undefined) {
+                if (trashumanciaCheck.checked !== data.sugerirTrashumanciaHabilitada) {
+                    trashumanciaCheck.checked = data.sugerirTrashumanciaHabilitada;
+                    trashumanciaCheck.dispatchEvent(new Event('change', { bubbles: true }));
+                    
+                    const formCheckParent = trashumanciaCheck.closest('.form-check') || trashumanciaCheck.parentElement;
+                    if (formCheckParent) {
+                        formCheckParent.classList.add('autofill-highlight');
+                        setTimeout(() => formCheckParent.classList.remove('autofill-highlight'), 1800);
+                    }
+                }
+            }
         })
         .catch(error => {
             console.error("Error al consultar clima:", error);

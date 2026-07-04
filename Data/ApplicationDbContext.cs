@@ -44,6 +44,12 @@ namespace BeeKeeperApp.Data
                 .HasForeignKey(t => t.ApiarioDestinoId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Trashumancia>()
+                .HasOne(t => t.Colmena)
+                .WithMany()
+                .HasForeignKey(t => t.ColmenaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Enum conversions
             modelBuilder.Entity<Apiario>()
                 .Property(a => a.Tipo)

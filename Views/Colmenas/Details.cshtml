@@ -14,7 +14,20 @@
                 <dd class="col-sm-9">@(Model.Apiario?.Nombre ?? "N/A")</dd>
 
                 <dt class="col-sm-3">Estado</dt>
-                <dd class="col-sm-9">@Model.Estado</dd>
+                <dd class="col-sm-9">
+                    @if (Model.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Activa)
+                    {
+                        <span class="badge bg-success">Activa</span>
+                    }
+                    else if (Model.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Inactiva)
+                    {
+                        <span class="badge bg-secondary">Inactiva</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Perdida</span>
+                    }
+                </dd>
 
                 <dt class="col-sm-3">Tipo</dt>
                 <dd class="col-sm-9">@Model.Tipo</dd>
@@ -48,8 +61,13 @@
                 }
             </dl>
             
-            <div class="mt-4">
-                <a asp-controller="Apiarios" asp-action="Details" asp-route-id="@Model.ApiarioId" class="btn btn-secondary">Volver al Apiario</a>
+            <div class="mt-4 d-flex gap-2">
+                <a asp-controller="Apiarios" asp-action="Details" asp-route-id="@Model.ApiarioId" class="btn btn-outline-secondary">Volver al Apiario</a>
+                @if (Model.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Activa)
+                {
+                    <a asp-action="DarDeBaja" asp-route-id="@Model.Id" class="btn btn-outline-danger">Eliminar</a>
+                }
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-honey">Editar Colmena</a>
             </div>
         </div>
     </div>

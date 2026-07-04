@@ -4,31 +4,53 @@
     ViewData["Title"] = "Movimientos de Trashumancia";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <p>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
         <a asp-action="Create" class="btn btn-honey">+ Registrar Traslado</a>
-    </p>
+    </div>
+    <form method="get" class="sort-control">
+        <span class="sort-label">Ordenar por:</span>
+        <select name="sortBy" onchange="this.form.submit()">
+            <option value="Fecha" selected="@(ViewBag.SortBy == "Fecha")">Fecha</option>
+            <option value="Distancia" selected="@(ViewBag.SortBy == "Distancia")">Distancia</option>
+        </select>
+        <a href="?sortBy=@ViewBag.SortBy&descending=@((!ViewBag.Descending).ToString().ToLower())" class="sort-dir-btn" title="Cambiar dirección de orden">
+            @(ViewBag.Descending == true ? "▲" : "▼")
+        </a>
+    </form>
 </div>
 
 <div class="glass-card">
-    <table class="table table-custom">
-        <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>Origen</th>
-                <th>Destino</th>
-                <th>Distancia</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model) {
+    <div class="table-responsive">
+        <table class="table table-custom align-middle">
+            <thead>
                 <tr>
-                    <td>@item.Fecha.ToShortDateString()</td>
-                    <td>@item.ApiarioOrigen?.Nombre</td>
-                    <td>@item.ApiarioDestino?.Nombre</td>
-                    <td>@item.DistanciaKm Km</td>
+                    <th class="text-nowrap">Fecha</th>
+                    <th class="text-nowrap">Colmena</th>
+                    <th class="text-nowrap">Origen</th>
+                    <th class="text-nowrap">Destino</th>
+                    <th class="text-nowrap">Distancia</th>
+                    <th class="text-nowrap text-end">Acciones</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var item in Model) {
+                    <tr>
+                        <td class="text-nowrap">@item.Fecha.ToString("dd/MM/yyyy")</td>
+                        <td class="text-nowrap">
+                            <a href="/Colmenas/Details/@item.ColmenaId" class="text-decoration-none fw-bold text-dark hover-honey">Colmena #@item.ColmenaId</a>
+                        </td>
+                        <td class="text-nowrap">@(item.ApiarioOrigen?.Nombre ?? "-")</td>
+                        <td class="text-nowrap">@(item.ApiarioDestino?.Nombre ?? "-")</td>
+                        <td class="text-nowrap fw-bold text-honey-dark">@item.DistanciaKm.ToString("N2") Km</td>
+                        <td class="text-nowrap text-end">
+                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('¿Está seguro de que desea quitar este traslado? Esta acción solo eliminará el registro y no afectará la ubicación actual de la colmena.');" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Quitar</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>

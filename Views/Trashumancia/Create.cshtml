@@ -7,33 +7,160 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="glass-card">
-            <h2 class="h4 mb-4">Registrar Nuevo Traslado</h2>
             <form asp-action="Create">
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Error:</strong> Por favor, verifique los campos del formulario.
+                        <button type="button" class="btn-close" data-bs-alert="dismiss" aria-label="Close"></button>
+                    </div>
+                }
+
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label asp-for="ApiarioOrigenId" class="form-label">Apiario Origen</label>
-                        <select asp-for="ApiarioOrigenId" class="form-select" asp-items="ViewBag.Apiarios" required></select>
+                        <label asp-for="ApiarioOrigenId" class="form-label fw-bold">Apiario Origen</label>
+                        <select id="origenSelect" asp-for="ApiarioOrigenId" class="form-select" asp-items="ViewBag.Apiarios" required>
+                            <option value="">-- Seleccionar Apiario --</option>
+                        </select>
+                        <span asp-validation-for="ApiarioOrigenId" class="text-danger small"></span>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label asp-for="ApiarioDestinoId" class="form-label">Apiario Destino</label>
-                        <select asp-for="ApiarioDestinoId" class="form-select" asp-items="ViewBag.Apiarios" required></select>
+                        <label asp-for="ApiarioDestinoId" class="form-label fw-bold">Apiario Destino</label>
+                        <select id="destinoSelect" asp-for="ApiarioDestinoId" class="form-select" asp-items="ViewBag.Apiarios" required>
+                            <option value="">-- Seleccionar Apiario --</option>
+                        </select>
+                        <span asp-validation-for="ApiarioDestinoId" class="text-danger small"></span>
                     </div>
                 </div>
+
+                <div class="mb-3">
+                    <label asp-for="ColmenaId" class="form-label fw-bold">Colmena a Trasladar</label>
+                    <select id="colmenaSelect" asp-for="ColmenaId" class="form-select" required asp-items="ViewBag.Colmenas">
+                        <option value="">-- Seleccione un apiario de origen primero --</option>
+                    </select>
+                    <span asp-validation-for="ColmenaId" class="text-danger small"></span>
+                </div>
+
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label asp-for="Fecha" class="form-label">Fecha</label>
-                        <input asp-for="Fecha" class="form-control" type="date" required />
+                        <label asp-for="Fecha" class="form-label fw-bold">Fecha</label>
+                        <input asp-for="Fecha" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" max="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                        <span asp-validation-for="Fecha" class="text-danger small"></span>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label asp-for="DistanciaKm" class="form-label">Distancia (Km)</label>
-                        <input asp-for="DistanciaKm" class="form-control" type="number" step="0.1" required />
+                        <label asp-for="DistanciaKm" class="form-label fw-bold">Distancia (Km)</label>
+                        <div class="input-group">
+                            <input id="distanciaInput" asp-for="DistanciaKm" class="form-control" type="number"
+                                   step="0.01" min="0" value="0" placeholder="0.00" />
+                            <span class="input-group-text" id="distancia-spinner" style="display:none;">
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            </span>
+                            <span class="input-group-text" id="distancia-icon" style="color: var(--honey);">
+                                <i class="bi bi-rulers"></i>
+                            </span>
+                        </div>
+                        <div id="distancia-hint" class="form-text text-muted">
+                            Selecciona ambos apiarios para calcular la distancia automáticamente.
+                        </div>
+                        <span asp-validation-for="DistanciaKm" class="text-danger small"></span>
                     </div>
                 </div>
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-honey w-100">Guardar Traslado</button>
-                    <a asp-action="Index" class="btn btn-link w-100 mt-2">Volver</a>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Guardar Traslado</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+(function () {
+    // Cache de coordenadas cargadas una sola vez
+    let apiarios = null;
+
+    async function loadApiarios() {
+        if (apiarios) return apiarios;
+        const res = await fetch('/Trashumancia/GetApiarios');
+        apiarios = await res.json();
+        return apiarios;
+    }
+
+    // Fórmula de Haversine → distancia en km entre dos pares lat/lon
+    function haversine(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Radio de la Tierra en km
+        const toRad = deg => deg * Math.PI / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat / 2) ** 2
+                + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2))
+                * Math.sin(dLon / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    async function updateDistancia() {
+        const origenId  = parseInt(document.getElementById('origenSelect').value);
+        const destinoId = parseInt(document.getElementById('destinoSelect').value);
+        const input     = document.getElementById('distanciaInput');
+        const hint      = document.getElementById('distancia-hint');
+        const spinner   = document.getElementById('distancia-spinner');
+        const icon      = document.getElementById('distancia-icon');
+
+        if (!origenId || !destinoId) {
+            input.value = '0';
+            hint.textContent = 'Selecciona ambos apiarios para calcular la distancia automáticamente.';
+            return;
+        }
+
+        if (origenId === destinoId) {
+            input.value = '0';
+            hint.textContent = 'El apiario de origen y destino son el mismo.';
+            return;
+        }
+
+        spinner.style.display = '';
+        icon.style.display    = 'none';
+
+        const lista   = await loadApiarios();
+        const origen  = lista.find(a => a.id === origenId);
+        const destino = lista.find(a => a.id === destinoId);
+
+        spinner.style.display = 'none';
+        icon.style.display    = '';
+
+        if (!origen || !destino) {
+            hint.textContent = 'No se pudieron obtener las coordenadas de los apiarios.';
+            return;
+        }
+
+        const distKm = haversine(origen.latitud, origen.longitud, destino.latitud, destino.longitud);
+        input.value  = distKm.toFixed(2);
+        hint.textContent = `📍 ${origen.nombre} → ${destino.nombre}: ${distKm.toFixed(2)} km en línea recta.`;
+    }
+
+    async function updateColmenas() {
+        const origenId = parseInt(document.getElementById('origenSelect').value);
+        const colmenaSelect = document.getElementById('colmenaSelect');
+        colmenaSelect.innerHTML = '<option value="">-- Seleccionar Colmena --</option>';
+        if (!origenId) return;
+
+        const res = await fetch(`/Trashumancia/GetColmenasByApiario?apiarioId=${origenId}`);
+        const colmenas = await res.json();
+        colmenas.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = `Colmena #${c.id}`;
+            colmenaSelect.appendChild(opt);
+        });
+    }
+
+    document.getElementById('origenSelect').addEventListener('change', function() {
+        updateDistancia();
+        updateColmenas();
+    });
+    document.getElementById('destinoSelect').addEventListener('change', updateDistancia);
+})();
+</script>
+}
