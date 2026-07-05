@@ -21,7 +21,9 @@ namespace BeeKeeperApp.Controllers
             ViewBag.Descending = descending;
 
             var query = _context.Revisiones
+                .Include(r => r.Apiario)
                 .Include(r => r.Colmena)
+                    .ThenInclude(c => c!.Apiario)
                 .AsQueryable();
 
             switch (sortBy)

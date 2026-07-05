@@ -38,7 +38,14 @@
                     <tr>
                         <td class="text-nowrap">@item.Fecha.ToString("dd/MM/yyyy")</td>
                         <td class="text-nowrap">
-                            <a href="/Colmenas/Details/@item.ColmenaId" class="text-decoration-none fw-bold text-dark hover-honey">Colmena #@item.ColmenaId</a>
+                            @if (item.Colmena?.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Perdida)
+                            {
+                                <span>Colmena #@item.ColmenaId (Perdida)</span>
+                            }
+                            else
+                            {
+                                <a href="/Colmenas/Details/@item.ColmenaId" class="text-decoration-none fw-bold text-dark hover-honey">Colmena #@item.ColmenaId</a>
+                            }
                         </td>
                         <td class="text-nowrap">@(item.ApiarioOrigen?.Nombre ?? "-")</td>
                         <td class="text-nowrap">@(item.ApiarioDestino?.Nombre ?? "-")</td>

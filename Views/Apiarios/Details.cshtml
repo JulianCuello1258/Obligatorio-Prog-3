@@ -69,7 +69,12 @@
                                     <span class="text-muted small">Sin producción</span>
                                 }
                             </td>
-                            <td><a asp-controller="Colmenas" asp-action="Details" asp-route-id="@c.Id" class="btn btn-sm btn-outline-secondary">Ver</a></td>
+                            <td>
+                                @if (c.Estado != EstadoColmena.Perdida)
+                                {
+                                    <a asp-controller="Colmenas" asp-action="Details" asp-route-id="@c.Id" class="btn btn-sm btn-outline-secondary">Ver</a>
+                                }
+                            </td>
                         </tr>
                     }
                 </tbody>

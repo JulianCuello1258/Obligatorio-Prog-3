@@ -63,7 +63,14 @@
                         <td class="text-nowrap">
                             @if (item.ColmenaId.HasValue)
                             {
-                                <a href="/Colmenas/Details/@item.ColmenaId" class="text-decoration-none fw-bold text-dark hover-honey">#@item.ColmenaId</a>
+                                @if (item.Colmena?.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Perdida)
+                                {
+                                    <span>#@item.ColmenaId (Perdida)</span>
+                                }
+                                else
+                                {
+                                    <a href="/Colmenas/Details/@item.ColmenaId" class="text-decoration-none fw-bold text-dark hover-honey">#@item.ColmenaId</a>
+                                }
                             }
                             else
                             {

@@ -27,6 +27,7 @@
             <thead>
                 <tr>
                     <th class="text-nowrap">Fecha</th>
+                    <th class="text-nowrap">Apiario</th>
                     <th class="text-nowrap">Colmena</th>
                     <th class="text-nowrap">Estado General</th>
                     <th class="text-nowrap">Enfermedad</th>
@@ -40,8 +41,28 @@
                     <tr>
                         <td class="text-nowrap">@item.Fecha.ToString("dd/MM/yyyy")</td>
                         <td class="text-nowrap">
+                            @{
+                                var apiarioNombre = item.Apiario?.Nombre ?? item.Colmena?.Apiario?.Nombre;
+                            }
+                            @if (apiarioNombre != null)
+                            {
+                                <span class="fw-semibold">@apiarioNombre</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td class="text-nowrap">
                             @if (item.ColmenaId > 0) {
-                                <a href="/Colmenas/Details/@item.ColmenaId" class="text-decoration-none fw-bold text-dark hover-honey">#@item.ColmenaId</a>
+                                @if (item.Colmena?.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Perdida)
+                                {
+                                    <span>#@item.ColmenaId (Perdida)</span>
+                                }
+                                else
+                                {
+                                    <a href="/Colmenas/Details/@item.ColmenaId" class="text-decoration-none fw-bold text-dark hover-honey">#@item.ColmenaId</a>
+                                }
                             } else {
                                 <span class="text-muted fst-italic">Apiario completo</span>
                             }

@@ -73,6 +73,13 @@ namespace BeeKeeperApp.Controllers
 
             if (colmena == null) return NotFound();
 
+            if (colmena.Estado == EstadoColmena.Perdida)
+            {
+                TempData["Toast"] = "No se pueden ver los detalles de una colmena perdida.";
+                TempData["ToastType"] = "warning";
+                return RedirectToAction(nameof(Index));
+            }
+
             return View(colmena);
         }
 
