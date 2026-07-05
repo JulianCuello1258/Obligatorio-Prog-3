@@ -43,7 +43,7 @@
                 <div class="stats-grid mt-3">
                     <div class="stat-item">
                         <a href="/Colmenas?apiarioId=@item.Id" class="text-decoration-none text-dark">
-                            <div class="stat-value text-honey hover-scale" style="font-size: 1.2rem;">@item.Colmenas.Count</div>
+                            <div class="stat-value text-honey hover-scale" style="font-size: 1.2rem;">@item.Colmenas.Count(c => c.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Activa)</div>
                             <div class="stat-label">Colmenas</div>
                         </a>
                     </div>

@@ -41,7 +41,10 @@
                 <dt class="col-sm-12 mt-3">
                     <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
                         <h5 class="text-honey-dark mb-0">Información de la Reina</h5>
-                        <a asp-action="GestionarReina" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-warning">Gestionar Reina</a>
+                        @if (Model.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Activa)
+                        {
+                            <a asp-action="GestionarReina" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-warning">Gestionar Reina</a>
+                        }
                     </div>
                 </dt>
                 
@@ -66,8 +69,8 @@
                 @if (Model.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Activa)
                 {
                     <a asp-action="DarDeBaja" asp-route-id="@Model.Id" class="btn btn-outline-danger">Eliminar</a>
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-honey">Editar Colmena</a>
                 }
-                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-honey">Editar Colmena</a>
             </div>
         </div>
     </div>

@@ -197,7 +197,7 @@ namespace BeeKeeperApp.Controllers
             {
                 Id = a.Id,
                 Nombre = a.Nombre,
-                TotalColmenas = a.Colmenas.Count,
+                TotalColmenas = a.Colmenas.Count(c => c.Estado == EstadoColmena.Activa),
                 ColmenasActivas = a.Colmenas.Count(c => c.Estado == EstadoColmena.Activa),
                 ProduccionTotal = a.Colmenas.SelectMany(c => c.Extracciones).Sum(e => e.CantidadKg) + a.Extracciones.Sum(e => e.CantidadKg)
             }).OrderByDescending(x => x.ProduccionTotal).ToList();

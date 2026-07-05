@@ -179,6 +179,13 @@ namespace BeeKeeperApp.Controllers
                 
             if (colmena == null) return NotFound();
 
+            if (colmena.Estado != EstadoColmena.Activa)
+            {
+                TempData["Toast"] = "No se puede editar una colmena que no está activa.";
+                TempData["ToastType"] = "warning";
+                return RedirectToAction(nameof(Details), new { id = colmena.Id });
+            }
+
             ViewData["ApiarioId"] = new SelectList(_context.Apiarios, "Id", "Nombre", colmena.ApiarioId);
             return View(colmena);
         }
@@ -188,6 +195,15 @@ namespace BeeKeeperApp.Controllers
         public async Task<IActionResult> Edit(int id, [Bind("Id,ApiarioId,Estado,Tipo,Poblacion,Temperamento,FechaCreacion,Reina")] Colmena colmena)
         {
             if (id != colmena.Id) return NotFound();
+
+            var existingColmena = await _context.Colmenas.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
+            if (existingColmena == null) return NotFound();
+            if (existingColmena.Estado != EstadoColmena.Activa)
+            {
+                TempData["Toast"] = "No se puede editar una colmena que no está activa.";
+                TempData["ToastType"] = "warning";
+                return RedirectToAction(nameof(Details), new { id = id });
+            }
 
             if (colmena.Reina != null && colmena.Reina.Presencia)
             {
@@ -283,6 +299,13 @@ namespace BeeKeeperApp.Controllers
 
             if (colmena == null) return NotFound();
 
+            if (colmena.Estado != EstadoColmena.Activa)
+            {
+                TempData["Toast"] = "No se puede gestionar la reina de una colmena que no está activa.";
+                TempData["ToastType"] = "warning";
+                return RedirectToAction(nameof(Details), new { id = colmena.Id });
+            }
+
             if (colmena.Reina == null)
             {
                 colmena.Reina = new Reina { ColmenaId = colmena.Id, Presencia = false };
@@ -296,6 +319,15 @@ namespace BeeKeeperApp.Controllers
         public async Task<IActionResult> GestionarReina(int id, [Bind("ColmenaId,Salud,Presencia,FechaNacimiento")] Reina reina)
         {
             if (id != reina.ColmenaId) return NotFound();
+
+            var colmena = await _context.Colmenas.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
+            if (colmena == null) return NotFound();
+            if (colmena.Estado != EstadoColmena.Activa)
+            {
+                TempData["Toast"] = "No se puede gestionar la reina de una colmena que no está activa.";
+                TempData["ToastType"] = "warning";
+                return RedirectToAction(nameof(Details), new { id = id });
+            }
 
             if (reina.Presencia)
             {
@@ -333,9 +365,7 @@ namespace BeeKeeperApp.Controllers
                 return RedirectToAction(nameof(Details), new { id = reina.ColmenaId });
             }
             
-            var colmena = await _context.Colmenas.FirstOrDefaultAsync(c => c.Id == id);
-            if (colmena != null) colmena.Reina = reina;
-            
+            colmena.Reina = reina;
             return View(colmena);
         }
     }

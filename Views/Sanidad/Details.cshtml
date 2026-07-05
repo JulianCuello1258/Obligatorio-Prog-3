@@ -11,7 +11,7 @@
             
             <div class="row mb-3">
                 <div class="col-sm-4 fw-bold">Fecha:</div>
-                <div class="col-sm-8">@Model.Fecha.ToShortDateString()</div>
+                <div class="col-sm-8">@Model.Fecha.ToString("dd/MM/yyyy")</div>
             </div>
 
             <div class="row mb-3">
@@ -50,7 +50,7 @@
                 <div class="col-sm-8">
                     @if (Model.ProximaDosis.HasValue)
                     {
-                        <span class="text-warning">@Model.ProximaDosis.Value.ToShortDateString()</span>
+                        <span class="text-warning">@Model.ProximaDosis.Value.ToString("dd/MM/yyyy")</span>
                     }
                     else
                     {

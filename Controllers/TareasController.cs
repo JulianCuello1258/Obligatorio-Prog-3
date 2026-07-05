@@ -129,12 +129,20 @@ namespace BeeKeeperApp.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPendingTasks()
         {
-            var pending = await _context.Tareas
+            var pendingDb = await _context.Tareas
                 .Where(t => !t.Completada)
                 .OrderBy(t => t.FechaProgramada)
                 .Take(5)
-                .Select(t => new { t.Id, t.Titulo, t.Descripcion, Fecha = t.FechaProgramada.ToShortDateString() })
+                .Select(t => new { t.Id, t.Titulo, t.Descripcion, t.FechaProgramada })
                 .ToListAsync();
+
+            var pending = pendingDb.Select(t => new { 
+                t.Id, 
+                t.Titulo, 
+                t.Descripcion, 
+                Fecha = t.FechaProgramada.ToString("dd/MM/yyyy") 
+            });
+
             return Json(pending);
         }
     }

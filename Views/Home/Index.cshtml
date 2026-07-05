@@ -31,7 +31,7 @@
                     @foreach (var rev in Model.UltimasRevisiones) {
                         <tr>
                             <td>#@rev.ColmenaId</td>
-                            <td>@rev.Fecha.ToShortDateString()</td>
+                            <td>@rev.Fecha.ToString("dd/MM/yyyy")</td>
                             <td>@rev.Tipo</td>
                             <td>
                                 @if (!string.IsNullOrEmpty(rev.Enfermedades)) {

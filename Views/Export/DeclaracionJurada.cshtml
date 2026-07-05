@@ -2,7 +2,7 @@
 
 @{
     Layout = null;
-    var totalColmenas = Model.Sum(a => a.Colmenas.Count);
+    var totalColmenas = Model.Sum(a => a.Colmenas.Count(c => c.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Activa));
     var hoy = DateTime.Now;
     var validaHasta = new DateTime(hoy.Year + 1, 6, 30);
     var rna = new Random().Next(100000, 999999).ToString();
@@ -343,7 +343,7 @@
                                 <td>@apiario.Departamento</td>
                                 <td class="col-center">@apiario.SeccionPolicial</td>
                                 <td>@apiario.Paraje</td>
-                                <td class="col-center">@apiario.Colmenas.Count</td>
+                                <td class="col-center">@apiario.Colmenas.Count(c => c.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Activa)</td>
                                 <td class="col-center">0</td>
                                 <td class="col-center">@apiario.Latitud.ToString("F5", System.Globalization.CultureInfo.InvariantCulture)</td>
                                 <td class="col-center">@apiario.Longitud.ToString("F5", System.Globalization.CultureInfo.InvariantCulture)</td>
@@ -500,7 +500,7 @@
                                     <td>@apiario.Departamento</td>
                                     <td class="col-center">@apiario.SeccionPolicial</td>
                                     <td>@apiario.Paraje</td>
-                                    <td class="col-center">@apiario.Colmenas.Count</td>
+                                    <td class="col-center">@apiario.Colmenas.Count(c => c.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Activa)</td>
                                     <td class="col-center">0</td>
                                     <td class="col-center">@apiario.Latitud.ToString("F5", System.Globalization.CultureInfo.InvariantCulture)</td>
                                     <td class="col-center">@apiario.Longitud.ToString("F5", System.Globalization.CultureInfo.InvariantCulture)</td>
