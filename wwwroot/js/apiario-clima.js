@@ -33,8 +33,18 @@ function consultarClima(lat, lon, contenedorId) {
         </div>
     `;
 
-    fetch(`/Apiario/Clima?lat=${latitude}&lon=${longitude}`)
+    fetch(`/Apiario/Clima?lat=${latitude}&lon=${longitude}`, {
+        headers: { 'Accept': 'application/json' }
+    })
         .then(response => {
+            if (response.status === 401) {
+                contenedor.innerHTML = `
+                    <div class="alert alert-warning border-0 shadow-sm rounded-3">
+                        <strong>🔒 Sesión expirada:</strong> Tu sesión ha vencido. Por favor <a href="/Account/Login" class="alert-link">inicia sesión nuevamente</a> para continuar.
+                    </div>
+                `;
+                return Promise.reject('unauthenticated');
+            }
             if (!response.ok) {
                 throw new Error("Error en la respuesta del servidor");
             }
@@ -272,6 +282,7 @@ function consultarClima(lat, lon, contenedorId) {
             }
         })
         .catch(error => {
+            if (error === 'unauthenticated') return; // Already handled above
             console.error("Error al consultar clima:", error);
             contenedor.innerHTML = `
                 <div class="alert alert-danger border-0 shadow-sm rounded-3">

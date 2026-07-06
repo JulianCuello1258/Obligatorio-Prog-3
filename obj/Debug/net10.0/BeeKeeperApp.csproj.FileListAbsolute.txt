@@ -415,7 +415,7 @@ C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\BeeKeeperApp.pdb
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\BeeKeeperApp.genruntimeconfig.cache
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\ref\BeeKeeperApp.dll
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\j3eoalueo1-{0}-u18u8ebpp4-u18u8ebpp4.gz
-C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\3p024mz72f-{0}-nidyql62cn-nidyql62cn.gz
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\tgwmu1lmtu-{0}-oncgmokque-oncgmokque.gz
 C:\Users\Usuario\Documents\GitHub\Obligatorio\bin\Debug\net10.0\Npgsql.dll
 C:\Users\Usuario\Documents\GitHub\Obligatorio\bin\Debug\net10.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
+C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\3p024mz72f-{0}-mea6uuyb5r-mea6uuyb5r.gz
