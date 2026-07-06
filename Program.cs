@@ -26,6 +26,8 @@ builder.Services.AddHttpClient<WeatherService>(client =>
 {
     // Render free tier: external HTTP calls must complete quickly to avoid cold-start hangs
     client.Timeout = TimeSpan.FromSeconds(20);
+    client.DefaultRequestHeaders.Add("User-Agent", "BeeKeeperApp/1.0 (contact: support@beekeeperapp.com)");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 builder.Services.AddMemoryCache();
 

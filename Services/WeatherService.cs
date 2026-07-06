@@ -42,20 +42,36 @@ namespace BeeKeeperApp.Services
                 var forecast = await forecastTask;
                 if (forecast == null)
                 {
+                    Console.WriteLine("[WeatherService] GetBeeWeatherSuitabilityAsync failed: GetCurrentForecastAsync returned null.");
                     return null;
                 }
 
                 var archive = await archiveTask;
+                if (archive == null)
+                {
+                    Console.WriteLine("[WeatherService] GetBeeWeatherSuitabilityAsync warning: GetHistoricalWeatherCachedAsync returned null.");
+                }
+
                 var osm = await osmTask;
+                if (osm == null)
+                {
+                    Console.WriteLine("[WeatherService] GetBeeWeatherSuitabilityAsync warning: GetOverpassSurroundingsCachedAsync returned null.");
+                }
+
                 var nearbyApiaries = await dbTask;
                 var geocode = await geocodeTask;
+                if (geocode == null)
+                {
+                    Console.WriteLine("[WeatherService] GetBeeWeatherSuitabilityAsync warning: GetGeocodeInfoCachedAsync returned null.");
+                }
 
                 // Evaluate the component scores
                 var dto = ProcessSuitability(latitude, longitude, forecast, archive, osm, nearbyApiaries, geocode);
                 return dto;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"[WeatherService] Exception in GetBeeWeatherSuitabilityAsync: {ex.Message}\n{ex.StackTrace}");
                 return null;
             }
         }
@@ -68,8 +84,9 @@ namespace BeeKeeperApp.Services
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
                 return await _httpClient.GetFromJsonAsync<OpenMeteoResponse>(url, cts.Token);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"[WeatherService] Exception in GetCurrentForecastAsync: {ex.Message}\n{ex.StackTrace}");
                 return null;
             }
         }
@@ -112,10 +129,14 @@ namespace BeeKeeperApp.Services
                 {
                     return await response.Content.ReadFromJsonAsync<OpenMeteoArchiveResponse>();
                 }
+                else
+                {
+                    Console.WriteLine($"[WeatherService] GetHistoricalWeatherAsync returned status: {response.StatusCode}");
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Silent catch: falls back gracefully with null
+                Console.WriteLine($"[WeatherService] Exception in GetHistoricalWeatherAsync: {ex.Message}\n{ex.StackTrace}");
             }
             return null;
         }
@@ -184,10 +205,14 @@ out tags center;
                 {
                     return await response.Content.ReadFromJsonAsync<OverpassResponse>();
                 }
+                else
+                {
+                    Console.WriteLine($"[WeatherService] GetOverpassSurroundingsAsync returned status: {response.StatusCode}");
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Silent catch to fallback gracefully
+                Console.WriteLine($"[WeatherService] Exception in GetOverpassSurroundingsAsync: {ex.Message}\n{ex.StackTrace}");
             }
             return null;
         }
@@ -884,10 +909,14 @@ out tags center;
                 {
                     return await response.Content.ReadFromJsonAsync<NominatimResponse>();
                 }
+                else
+                {
+                    Console.WriteLine($"[WeatherService] GetGeocodeInfoAsync returned status: {response.StatusCode}");
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Silent catch
+                Console.WriteLine($"[WeatherService] Exception in GetGeocodeInfoAsync: {ex.Message}\n{ex.StackTrace}");
             }
             return null;
         }
