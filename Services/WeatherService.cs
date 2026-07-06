@@ -40,10 +40,27 @@ namespace BeeKeeperApp.Services
                 await Task.WhenAll(forecastTask, archiveTask, osmTask, dbTask, geocodeTask);
 
                 var forecast = await forecastTask;
+                bool isForecastFallback = false;
                 if (forecast == null)
                 {
-                    Console.WriteLine("[WeatherService] GetBeeWeatherSuitabilityAsync failed: GetCurrentForecastAsync returned null.");
-                    return null;
+                    Console.WriteLine("[WeatherService] GetBeeWeatherSuitabilityAsync warning: GetCurrentForecastAsync returned null (probably rate limited 429). Using fallback.");
+                    isForecastFallback = true;
+                    forecast = new OpenMeteoResponse
+                    {
+                        Latitude = latitude,
+                        Longitude = longitude,
+                        Hourly = new HourlyData
+                        {
+                            Time = new List<string> { DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm") },
+                            Temperature2m = new List<double> { 20.0 },
+                            RelativeHumidity2m = new List<double> { 60.0 },
+                            WindSpeed10m = new List<double> { 10.0 },
+                            WindDirection10m = new List<double> { 180.0 },
+                            Precipitation = new List<double> { 0.0 },
+                            ShortwaveRadiation = new List<double> { 200.0 },
+                            SoilTemperature0cm = new List<double> { 18.0 }
+                        }
+                    };
                 }
 
                 var archive = await archiveTask;
@@ -66,7 +83,7 @@ namespace BeeKeeperApp.Services
                 }
 
                 // Evaluate the component scores
-                var dto = ProcessSuitability(latitude, longitude, forecast, archive, osm, nearbyApiaries, geocode);
+                var dto = ProcessSuitability(latitude, longitude, forecast, archive, osm, nearbyApiaries, geocode, isForecastFallback);
                 return dto;
             }
             catch (Exception ex)
@@ -252,7 +269,8 @@ out tags center;
             OpenMeteoArchiveResponse? archive,
             OverpassResponse? osm,
             List<NearbyApiaryDto> nearbyApiaries,
-            NominatimResponse? geocode)
+            NominatimResponse? geocode,
+            bool isForecastFallback)
         {
             // Find current forecast metrics
             var nowUtc = DateTime.UtcNow;
@@ -295,6 +313,11 @@ out tags center;
                 RazonesSi = new List<string>(),
                 RazonesNo = new List<string>()
             };
+
+            if (isForecastFallback)
+            {
+                dto.RazonesNo.Add("No se pudo conectar con el clima en tiempo real actual (Rate limit o desconexión). La aptitud se calcula con el histórico y entorno.");
+            }
 
             // 2. Historical Weather Analysis (25 pts base weight)
             int historicalScore = 100;
