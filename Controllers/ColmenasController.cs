@@ -375,5 +375,31 @@ namespace BeeKeeperApp.Controllers
             colmena.Reina = reina;
             return View(colmena);
         }
+
+        // POST: Colmenas/Reactivar/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Reactivar(int id)
+        {
+            var colmena = await _context.Colmenas.FindAsync(id);
+            if (colmena == null) return NotFound();
+
+            if (colmena.Estado == EstadoColmena.Inactiva)
+            {
+                colmena.Estado = EstadoColmena.Activa;
+                _context.Update(colmena);
+                await _context.SaveChangesAsync();
+
+                TempData["Toast"] = $"Colmena #{id} reactivada correctamente.";
+                TempData["ToastType"] = "success";
+            }
+            else
+            {
+                TempData["Toast"] = "Solo se pueden reactivar colmenas inactivas.";
+                TempData["ToastType"] = "warning";
+            }
+
+            return RedirectToAction(nameof(Details), new { id = id });
+        }
     }
 }

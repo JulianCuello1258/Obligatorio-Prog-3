@@ -63,6 +63,35 @@
                     <dd class="col-sm-9">@(Model.Reina?.FechaNacimiento?.ToString("dd/MM/yyyy") ?? "No registrada")</dd>
                 }
             </dl>
+
+            <hr class="mt-4 mb-4" />
+            <h5 class="text-honey-dark mb-3">🍯 Historial de Producción</h5>
+            @if (Model.Extracciones != null && Model.Extracciones.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-custom align-middle">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Cantidad cosechada</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ext in Model.Extracciones.OrderByDescending(e => e.Fecha))
+                            {
+                                <tr>
+                                    <td>@ext.Fecha.ToString("dd/MM/yyyy")</td>
+                                    <td class="fw-bold text-honey-dark">@ext.CantidadKg.ToString("N1") Kg</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted fst-italic">Esta colmena no registra producción hasta el momento.</p>
+            }
             
             <div class="mt-4 d-flex gap-2">
                 <a asp-controller="Apiarios" asp-action="Details" asp-route-id="@Model.ApiarioId" class="btn btn-outline-secondary">Volver al Apiario</a>
@@ -70,6 +99,12 @@
                 {
                     <a asp-action="DarDeBaja" asp-route-id="@Model.Id" class="btn btn-outline-danger">Eliminar</a>
                     <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-honey">Editar Colmena</a>
+                }
+                else if (Model.Estado == BeeKeeperApp.Models.Entities.EstadoColmena.Inactiva)
+                {
+                    <form asp-action="Reactivar" asp-route-id="@Model.Id" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-success">Reactivar</button>
+                    </form>
                 }
             </div>
         </div>
