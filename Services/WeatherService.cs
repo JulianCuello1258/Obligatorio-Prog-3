@@ -65,7 +65,8 @@ namespace BeeKeeperApp.Services
             try
             {
                 var url = $"https://api.open-meteo.com/v1/forecast?latitude={latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}&longitude={longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation,shortwave_radiation,soil_temperature_0cm&timezone=GMT";
-                return await _httpClient.GetFromJsonAsync<OpenMeteoResponse>(url);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                return await _httpClient.GetFromJsonAsync<OpenMeteoResponse>(url, cts.Token);
             }
             catch (Exception)
             {
@@ -105,7 +106,8 @@ namespace BeeKeeperApp.Services
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.Add("User-Agent", "BeeKeeperApp/1.0");
 
-                var response = await _httpClient.SendAsync(request);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(12));
+                var response = await _httpClient.SendAsync(request, cts.Token);
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<OpenMeteoArchiveResponse>();
@@ -176,7 +178,8 @@ out tags center;
                 };
                 request.Headers.Add("User-Agent", "BeeKeeperApp/1.0 (contact: support@beekeeperapp.com)");
 
-                var response = await _httpClient.SendAsync(request);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+                var response = await _httpClient.SendAsync(request, cts.Token);
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<OverpassResponse>();
@@ -875,7 +878,8 @@ out tags center;
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.Add("User-Agent", "BeeKeeperApp/1.0 (contact: support@beekeeperapp.com)");
 
-                var response = await _httpClient.SendAsync(request);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+                var response = await _httpClient.SendAsync(request, cts.Token);
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<NominatimResponse>();

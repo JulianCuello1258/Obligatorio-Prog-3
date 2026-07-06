@@ -418,4 +418,4 @@ C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\j3eoa
 C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\tgwmu1lmtu-{0}-oncgmokque-oncgmokque.gz
 C:\Users\Usuario\Documents\GitHub\Obligatorio\bin\Debug\net10.0\Npgsql.dll
 C:\Users\Usuario\Documents\GitHub\Obligatorio\bin\Debug\net10.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
-C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\3p024mz72f-{0}-mea6uuyb5r-mea6uuyb5r.gz
+C:\Users\Usuario\Documents\GitHub\Obligatorio\obj\Debug\net10.0\compressed\3p024mz72f-{0}-g3rq7ba7ch-g3rq7ba7ch.gz

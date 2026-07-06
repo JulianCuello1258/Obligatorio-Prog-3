@@ -46,7 +46,12 @@ function consultarClima(lat, lon, contenedorId) {
                 return Promise.reject('unauthenticated');
             }
             if (!response.ok) {
-                throw new Error("Error en la respuesta del servidor");
+                return response.json().then(err => {
+                    throw new Error(err.message || "Error al obtener datos climáticos.");
+                }).catch(jsonErr => {
+                    if (jsonErr instanceof SyntaxError) throw new Error("El servicio de clima no está disponible en este momento.");
+                    throw jsonErr;
+                });
             }
             return response.json();
         })

@@ -22,7 +22,11 @@ builder.WebHost.ConfigureKestrel(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddHttpClient<WeatherService>();
+builder.Services.AddHttpClient<WeatherService>(client =>
+{
+    // Render free tier: external HTTP calls must complete quickly to avoid cold-start hangs
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
 builder.Services.AddMemoryCache();
 
 builder.Services.AddSession(options => {
